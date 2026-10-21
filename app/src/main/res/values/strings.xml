@@ -1,0 +1,60 @@
+<resources>
+    <string name="app_name">GhorCycle</string>
+    <string name="app_tagline">Smart Household Cycling &amp; Resale Marketplace</string>
+    <string name="splash_quote">"Give pre-loved household goods a second life"</string>
+    <string name="btn_get_started">Get Started</string>
+
+    <!-- Auth -->
+    <string name="login_title">Welcome Back</string>
+    <string name="login_subtitle">Sign in to your GhorCycle account</string>
+    <string name="hint_email_phone">Email or Phone Number</string>
+    <string name="hint_password">Password</string>
+    <string name="btn_login">Sign In</string>
+    <string name="btn_browse_guest">Continue as Guest</string>
+    <string name="prompt_no_account">Don\'t have an account? Register</string>
+
+    <string name="register_title">Join GhorCycle</string>
+    <string name="register_subtitle">Start buying, selling &amp; recycling today</string>
+    <string name="hint_full_name">Full Name</string>
+    <string name="hint_phone">Phone Number</string>
+    <string name="hint_confirm_password">Confirm Password</string>
+    <string name="btn_register">Create Account</string>
+    <string name="prompt_have_account">Already have an account? Sign In</string>
+
+    <!-- Main Activity -->
+    <string name="main_greeting">Hello, Neighbor 👋</string>
+    <string name="main_search_hint">Search bicycles, furniture, appliances…</string>
+    <string name="main_featured_heading">Featured Household Items</string>
+    <string name="btn_add_item">Sell / List Item</string>
+    <string name="btn_profile">My Profile</string>
+    <string name="btn_logout">Logout</string>
+
+    <!-- Add Item -->
+    <string name="add_item_title">List an Item</string>
+    <string name="add_item_subtitle">Give your household goods a new home</string>
+    <string name="hint_item_title">Item Name (e.g. Vintage Study Desk)</string>
+    <string name="hint_item_category">Category (e.g. Furniture, Electronics, Cycle)</string>
+    <string name="hint_item_price">Price (৳ BDT)</string>
+    <string name="hint_item_condition">Condition (e.g. Like New, Gently Used)</string>
+    <string name="hint_item_description">Describe the item condition, dimensions, defects…</string>
+    <string name="btn_publish_item">Publish Listing</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <!-- Product Details -->
+    <string name="product_details_title">Product Details</string>
+    <string name="btn_contact_seller">Contact Seller</string>
+    <string name="btn_make_offer">Make an Offer</string>
+    <string name="btn_back_home">Back to Browse</string>
+
+    <!-- Profile -->
+    <string name="profile_title">My Profile</string>
+    <string name="profile_name_placeholder">Arif Hossain</string>
+    <string name="profile_email_placeholder">arif.hossain@example.com</string>
+    <string name="profile_location_placeholder">Dhanmondi, Dhaka</string>
+    <string name="profile_stats_listed">Listed</string>
+    <string name="profile_stats_cycled">Cycled</string>
+    <string name="profile_stats_rating">Rating</string>
+    <string name="btn_edit_profile">Edit Profile</string>
+    <string name="btn_my_listings">My Active Listings</string>
+    <string name="btn_saved_items">Saved / Wishlist</string>
+</resources>
