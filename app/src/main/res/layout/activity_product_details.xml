@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="16dp">
 
         <!-- Top Navigation Bar -->
         <LinearLayout
@@ -26,24 +26,24 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="← Back"
-                android:textColor="@color/brand_primary_dark"
+                android:textColor="@color/eco_green_primary"
                 android:textSize="14sp" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="4dp"
                 android:layout_weight="1"
                 android:fontFamily="sans-serif-bold"
                 android:text="@string/product_details_title"
                 android:textColor="@color/text_primary"
-                android:textSize="20sp" />
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/tvDetailIdBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="#E2E8F0"
+                android:background="@drawable/bg_badge_condition"
                 android:paddingStart="8dp"
                 android:paddingTop="3dp"
                 android:paddingEnd="8dp"
@@ -54,146 +54,201 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Product Image Placeholder -->
-        <androidx.cardview.widget.CardView
+        <!-- Product Image Banner -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/brand_primary_light"
+            android:layout_height="200dp"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="16dp"
-            app:cardElevation="0dp">
+            app:cardElevation="2dp"
+            app:strokeColor="#E2E8F0"
+            app:strokeWidth="1dp">
 
-            <LinearLayout
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:gravity="center"
-                android:orientation="vertical">
+                android:background="@drawable/bg_product_placeholder">
 
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:contentDescription="Product Image"
-                    android:src="@drawable/ic_ghorcycle_logo"
-                    app:tint="@color/brand_primary_dark" />
+                    android:id="@+id/ivDetailProductImage"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Product image view"
+                    android:src="@drawable/ic_category_furniture"
+                    app:tint="@color/eco_green_primary" />
 
+                <!-- Category Pill Overlay -->
                 <TextView
-                    android:id="@+id/tvDetailPlaceholderImgText"
+                    android:id="@+id/tvDetailCategory"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="GhorCycle Verified Household Item"
-                    android:textColor="@color/brand_primary_dark"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+                    android:layout_gravity="top|start"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/bg_badge_condition"
+                    android:fontFamily="sans-serif-bold"
+                    android:paddingStart="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="4dp"
+                    android:text="Category: Furniture"
+                    android:textColor="@color/eco_green_dark"
+                    android:textSize="12sp"
+                    tools:text="Category: Furniture" />
 
-        <!-- Info Card -->
-        <androidx.cardview.widget.CardView
+                <!-- Condition Pill Overlay -->
+                <TextView
+                    android:id="@+id/tvDetailCondition"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/bg_category_chip_selected"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingStart="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="4dp"
+                    android:text="Like New"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    tools:text="Like New" />
+
+            </FrameLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Product Information Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             app:cardBackgroundColor="@color/card_surface"
-            app:cardCornerRadius="14dp"
-            app:cardElevation="2dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:strokeColor="#E2E8F0"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="16dp">
 
+                <!-- Product Name -->
+                <TextView
+                    android:id="@+id/tvDetailName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-bold"
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp"
+                    tools:text="Solid Malaysian Oak Study Desk &amp; Chair" />
+
+                <!-- Price Row with FREE Badge -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/tvDetailCategory"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Category: Bicycles"
-                        android:textColor="@color/brand_primary"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvDetailCondition"
+                        android:id="@+id/tvDetailPrice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="#FEF3C7"
-                        android:paddingStart="8dp"
-                        android:paddingTop="3dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="3dp"
-                        android:text="Gently Used"
-                        android:textColor="#92400E"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
+                        android:fontFamily="sans-serif-black"
+                        android:textColor="@color/eco_green_primary"
+                        android:textSize="24sp"
+                        tools:text="৳ 5,200" />
+
+                    <TextView
+                        android:id="@+id/tvDetailFreeBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_badge_free"
+                        android:paddingStart="10dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="4dp"
+                        android:text="FREE ITEM"
+                        android:textColor="@color/white"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvDetailName"
-                    android:layout_width="wrap_content"
+                <!-- Eco-Impact Banner -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:fontFamily="sans-serif-bold"
-                    android:text="Sample Product Name"
-                    android:textColor="@color/text_primary"
-                    android:textSize="22sp" />
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_badge_condition"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
 
-                <TextView
-                    android:id="@+id/tvDetailPrice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="৳ 0.00"
-                    android:textColor="@color/brand_accent_dark"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🌱"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Reusing household goods reduces community waste and carbon footprint."
+                        android:textColor="@color/eco_green_dark"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="14dp"
                     android:layout_marginBottom="14dp"
-                    android:background="@color/card_border" />
+                    android:background="#F1F5F9" />
 
                 <!-- Seller Info Block -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Seller Information"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="Seller &amp; Location"
                     android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/tvDetailSeller"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Listed by: Seller Name"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    tools:text="Listed by: Tasnim Rahman (Uttara Sector 7, Dhaka)" />
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="14dp"
                     android:layout_marginBottom="14dp"
-                    android:background="@color/card_border" />
+                    android:background="#F1F5F9" />
 
                 <!-- Description Block -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-bold"
                     android:text="Item Description"
                     android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/tvDetailDescription"
@@ -201,9 +256,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:lineSpacingExtra="3dp"
-                    android:text="This is a verified pre-owned household item ready for reuse."
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    tools:text="High quality Malaysian oak desk with 3 lockable storage drawers and an ergonomic adjustable chair." />
 
                 <!-- Action Buttons -->
                 <LinearLayout
@@ -215,32 +270,32 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnDetailContactSeller"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:backgroundTint="@color/brand_primary"
+                        android:layout_height="48dp"
+                        android:backgroundTint="@color/eco_green_primary"
                         android:text="@string/btn_contact_seller"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
                         android:textSize="15sp"
-                        app:cornerRadius="10dp" />
+                        app:cornerRadius="12dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnDetailMakeOffer"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
+                        android:layout_height="48dp"
                         android:layout_marginTop="10dp"
                         android:text="@string/btn_make_offer"
                         android:textAllCaps="false"
-                        android:textColor="@color/brand_accent_dark"
+                        android:textColor="@color/eco_green_primary"
                         android:textSize="15sp"
-                        app:cornerRadius="10dp"
-                        app:strokeColor="@color/brand_accent" />
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/eco_green_primary" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnDetailBackHome"
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="46dp"
                         android:layout_marginTop="6dp"
                         android:text="@string/btn_back_home"
                         android:textAllCaps="false"
@@ -250,7 +305,7 @@
                 </LinearLayout>
 
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 </ScrollView>

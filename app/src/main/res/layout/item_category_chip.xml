@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layoutCategoryChip"
+    android:layout_width="wrap_content"
+    android:layout_height="38dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="6dp"
+    android:background="@drawable/bg_category_chip_unselected"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingEnd="14dp">
+
+    <ImageView
+        android:id="@+id/ivCategoryIcon"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:contentDescription="Category icon"
+        android:src="@drawable/ic_category_all"
+        app:tint="@color/eco_green_primary" />
+
+    <TextView
+        android:id="@+id/tvCategoryName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="All"
+        android:textColor="@color/text_primary"
+        android:textSize="13sp"
+        tools:text="Furniture" />
+
+</LinearLayout>

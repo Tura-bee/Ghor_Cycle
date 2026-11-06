@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand Primary Colors (Emerald & Teal Eco-palette) -->
-    <color name="brand_primary">#0D9488</color>
-    <color name="brand_primary_dark">#0F766E</color>
-    <color name="brand_primary_light">#CCFBF1</color>
+    <!-- GhorCycle Eco-Friendly Green & White Palette -->
+    <color name="eco_green_primary">#15803D</color>
+    <color name="eco_green_dark">#166534</color>
+    <color name="eco_green_light">#DCFCE7</color>
+    <color name="eco_green_surface">#F0FDF4</color>
+    <color name="eco_green_accent">#16A34A</color>
+    <color name="eco_free_badge">#0D9488</color>
+    <color name="eco_green_badge">#059669</color>
+    <color name="eco_nav_active">#15803D</color>
+    <color name="eco_nav_inactive">#64748B</color>
+
+    <!-- Legacy Brand Palette Aliases -->
+    <color name="brand_primary">#15803D</color>
+    <color name="brand_primary_dark">#166534</color>
+    <color name="brand_primary_light">#DCFCE7</color>
     <color name="brand_accent">#F97316</color>
     <color name="brand_accent_dark">#EA580C</color>
 
     <!-- Neutral & Background Colors -->
-    <color name="bg_light">#F8FAFC</color>
+    <color name="bg_light">#F8FAF8</color>
     <color name="card_surface">#FFFFFF</color>
     <color name="card_border">#E2E8F0</color>
     <color name="text_primary">#0F172A</color>

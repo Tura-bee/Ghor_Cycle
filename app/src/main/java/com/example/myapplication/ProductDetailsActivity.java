@@ -3,23 +3,27 @@ package com.example.myapplication;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 /**
  * ProductDetailsActivity displays comprehensive details for an item in GhorCycle.
  *
  * Demonstrates:
  * 1. Extraction and presentation of Intent extras passed from MainActivity or AddItemActivity.
- * 2. Explicit handling of missing/default Intent extras.
- * 3. Interactive click listeners for buyer-seller workflows (placeholders).
- * 4. Proper Up and Back navigation to return to the catalog.
- * 5. Complete Activity lifecycle logging.
+ * 2. Visual handling of priced vs FREE community items.
+ * 3. Dynamic category icon and accessible image content descriptions.
+ * 4. Interactive click listeners for buyer-seller workflows (placeholders).
+ * 5. Back navigation to return to the catalog.
+ * 6. Complete Activity lifecycle logging.
  */
 public class ProductDetailsActivity extends AppCompatActivity {
 
@@ -32,6 +36,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
     public static final String EXTRA_PRODUCT_SELLER = "com.ghorcycle.extra.PRODUCT_SELLER";
     public static final String EXTRA_PRODUCT_CONDITION = "com.ghorcycle.extra.PRODUCT_CONDITION";
     public static final String EXTRA_PRODUCT_DESCRIPTION = "com.ghorcycle.extra.PRODUCT_DESCRIPTION";
+    public static final String EXTRA_PRODUCT_IMAGE_RES = "com.ghorcycle.extra.PRODUCT_IMAGE_RES";
+    public static final String EXTRA_PRODUCT_IS_FREE = "com.ghorcycle.extra.PRODUCT_IS_FREE";
 
     private String productId;
     private String productName;
@@ -40,6 +46,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
     private String productSeller;
     private String productCondition;
     private String productDescription;
+    private int productImageRes = 0;
+    private boolean isProductFree = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +64,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
             productSeller = getIntent().getStringExtra(EXTRA_PRODUCT_SELLER);
             productCondition = getIntent().getStringExtra(EXTRA_PRODUCT_CONDITION);
             productDescription = getIntent().getStringExtra(EXTRA_PRODUCT_DESCRIPTION);
+            productImageRes = getIntent().getIntExtra(EXTRA_PRODUCT_IMAGE_RES, 0);
+            isProductFree = getIntent().getBooleanExtra(EXTRA_PRODUCT_IS_FREE, false);
         }
 
         // Apply fallbacks if any extra was not supplied
@@ -69,16 +79,23 @@ public class ProductDetailsActivity extends AppCompatActivity {
             productDescription = "Quality verified household good looking for a second life.";
         }
 
+        if (productPrice.equalsIgnoreCase("FREE") || productPrice.equalsIgnoreCase("৳ 0") || isProductFree) {
+            isProductFree = true;
+            productPrice = "FREE";
+        }
+
         Log.d(TAG, "ProductDetailsActivity: Displaying item [ID=" + productId + ", Name=" + productName + "]");
 
         // Bind Views
         TextView tvIdBadge = findViewById(R.id.tvDetailIdBadge);
         TextView tvName = findViewById(R.id.tvDetailName);
         TextView tvPrice = findViewById(R.id.tvDetailPrice);
+        TextView tvFreeBadge = findViewById(R.id.tvDetailFreeBadge);
         TextView tvCategory = findViewById(R.id.tvDetailCategory);
         TextView tvCondition = findViewById(R.id.tvDetailCondition);
         TextView tvSeller = findViewById(R.id.tvDetailSeller);
         TextView tvDescription = findViewById(R.id.tvDetailDescription);
+        ImageView ivImage = findViewById(R.id.ivDetailProductImage);
 
         Button btnBack = findViewById(R.id.btnDetailBack);
         Button btnBackHome = findViewById(R.id.btnDetailBackHome);
@@ -88,11 +105,29 @@ public class ProductDetailsActivity extends AppCompatActivity {
         // Populate Views with Intent data
         tvIdBadge.setText("ID: " + productId);
         tvName.setText(productName);
-        tvPrice.setText(productPrice);
         tvCategory.setText("Category: " + productCategory);
         tvCondition.setText(productCondition);
         tvSeller.setText("Listed by: " + productSeller);
         tvDescription.setText(productDescription);
+
+        // Price & Free formatting
+        if (isProductFree) {
+            tvPrice.setText("FREE");
+            tvPrice.setTextColor(ContextCompat.getColor(this, R.color.eco_free_badge));
+            tvFreeBadge.setVisibility(View.VISIBLE);
+        } else {
+            tvPrice.setText(productPrice);
+            tvPrice.setTextColor(ContextCompat.getColor(this, R.color.eco_green_primary));
+            tvFreeBadge.setVisibility(View.GONE);
+        }
+
+        // Image icon & accessibility description
+        if (productImageRes != 0) {
+            ivImage.setImageResource(productImageRes);
+        } else {
+            ivImage.setImageResource(R.drawable.ic_category_all);
+        }
+        ivImage.setContentDescription("Photo and illustration for " + productName);
 
         // Navigation click listeners
         btnBack.setOnClickListener(v -> handleNavigateBack());
@@ -100,7 +135,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
 
         btnContactSeller.setOnClickListener(v -> {
             Log.d(TAG, "ProductDetailsActivity: Contact seller clicked for " + productSeller);
-            Toast.makeText(this, "Connecting to seller: " + productSeller + " (Feature in Stage 2)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Connecting to seller: " + productSeller + " (Messaging coming in next stage)", Toast.LENGTH_SHORT).show();
         });
 
         btnMakeOffer.setOnClickListener(v -> {
@@ -119,7 +154,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
 
     private void handleNavigateBack() {
         Log.d(TAG, "ProductDetailsActivity: Navigating back to parent catalog");
-        finish(); // Finishes current Activity and smoothly returns to caller
+        finish();
     }
 
     @Override
@@ -165,5 +200,6 @@ public class ProductDetailsActivity extends AppCompatActivity {
         outState.putString("product_id", productId);
         outState.putString("product_name", productName);
         outState.putString("product_price", productPrice);
+        outState.putBoolean("product_is_free", isProductFree);
     }
 }
