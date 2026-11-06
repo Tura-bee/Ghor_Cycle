@@ -17,7 +17,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="20dp"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -25,10 +25,11 @@
                 android:id="@+id/ivLoginLogo"
                 android:layout_width="64dp"
                 android:layout_height="64dp"
-                android:background="@drawable/bg_splash_gradient"
+                android:background="@drawable/bg_category_chip_selected"
                 android:contentDescription="@string/app_name"
-                android:padding="12dp"
-                android:src="@drawable/ic_ghorcycle_logo" />
+                android:padding="14dp"
+                android:src="@drawable/ic_ghorcycle_logo"
+                app:tint="@color/white" />
 
             <TextView
                 android:id="@+id/tvLoginTitle"
@@ -51,13 +52,15 @@
         </LinearLayout>
 
         <!-- Form Card -->
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="28dp"
             app:cardBackgroundColor="@color/card_surface"
             app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
+            app:cardElevation="2dp"
+            app:strokeColor="#E2E8F0"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -65,10 +68,24 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
+                <!-- Error feedback banner -->
+                <TextView
+                    android:id="@+id/tvLoginErrorMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/bg_badge_condition"
+                    android:padding="10dp"
+                    android:textColor="@color/status_danger"
+                    android:textSize="13sp"
+                    android:visibility="gone"
+                    tools:text="Incorrect password. Please try again."
+                    tools:visibility="visible" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/hint_email_phone"
+                    android:text="Email Address"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
@@ -78,9 +95,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_edit_text"
-                    android:hint="e.g. user@ghorcycle.com or 017..."
+                    android:background="@drawable/bg_search_bar"
+                    android:hint="e.g. user@ghorcycle.com"
                     android:inputType="textEmailAddress"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
                     android:textColor="@color/text_primary"
                     android:textSize="15sp" />
 
@@ -98,23 +117,36 @@
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_edit_text"
-                    android:hint="Enter password"
+                    android:background="@drawable/bg_search_bar"
+                    android:hint="Enter your password (min 6 chars)"
                     android:inputType="textPassword"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
                     android:textColor="@color/text_primary"
                     android:textSize="15sp" />
+
+                <!-- Loading Spinner -->
+                <ProgressBar
+                    android:id="@+id/pbLoginLoading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="16dp"
+                    android:indeterminateTint="@color/eco_green_primary"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLoginSubmit"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:layout_marginTop="24dp"
-                    android:backgroundTint="@color/brand_primary"
+                    android:layout_marginTop="20dp"
+                    android:backgroundTint="@color/eco_green_primary"
                     android:text="@string/btn_login"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
                     android:textSize="16sp"
-                    app:cornerRadius="10dp" />
+                    app:cornerRadius="12dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLoginGuest"
@@ -124,19 +156,19 @@
                     android:layout_marginTop="12dp"
                     android:text="@string/btn_browse_guest"
                     android:textAllCaps="false"
-                    android:textColor="@color/brand_primary_dark"
+                    android:textColor="@color/eco_green_primary"
                     android:textSize="15sp"
-                    app:cornerRadius="10dp"
-                    app:strokeColor="@color/brand_primary" />
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/eco_green_primary" />
 
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- Navigation to Register -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
+            android:layout_marginTop="24dp"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -146,7 +178,7 @@
                 android:layout_height="wrap_content"
                 android:padding="8dp"
                 android:text="@string/prompt_no_account"
-                android:textColor="@color/brand_accent_dark"
+                android:textColor="@color/eco_green_primary"
                 android:textSize="15sp"
                 android:textStyle="bold" />
         </LinearLayout>

@@ -4,8 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,15 +15,17 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseUser;
+
 /**
- * RegisterActivity enables new users to join the GhorCycle community.
+ * RegisterActivity registers new users with Firebase Authentication.
  *
- * Demonstrates:
- * 1. Comprehensive input validation for registration credentials.
- * 2. Explicit Intent navigation to MainActivity upon successful registration.
- * 3. Smooth return navigation to LoginActivity.
- * 4. Custom Back-press handling using AndroidX OnBackPressedDispatcher.
- * 5. Lifecycle callback demonstrations and logging.
+ * Implements:
+ * 1. Client-side validation: Name, Email format, Password length (>= 6 chars), and Password match.
+ * 2. Real Firebase user creation with display name profile binding.
+ * 3. Loading state indicators and human-readable failure messages.
+ * 4. Passwords are NEVER written to logs or external storage.
+ * 5. Complete Activity lifecycle logging.
  */
 public class RegisterActivity extends AppCompatActivity {
 
@@ -32,31 +36,45 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText etPhone;
     private EditText etPassword;
     private EditText etConfirmPassword;
+    private ProgressBar pbLoading;
+    private TextView tvErrorMessage;
+    private Button btnRegister;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "RegisterActivity: onCreate() - Setting layout and configuring form controls");
+        Log.d(TAG, "RegisterActivity: onCreate() - Binding registration views");
         setContentView(R.layout.activity_register);
 
+        bindViews();
+        setupListeners();
+        setupBackNavigation();
+    }
+
+    private void bindViews() {
         etName = findViewById(R.id.etRegisterName);
         etEmail = findViewById(R.id.etRegisterEmail);
         etPhone = findViewById(R.id.etRegisterPhone);
         etPassword = findViewById(R.id.etRegisterPassword);
         etConfirmPassword = findViewById(R.id.etRegisterConfirmPassword);
-        Button btnRegister = findViewById(R.id.btnRegisterSubmit);
-        TextView tvToLogin = findViewById(R.id.tvRegisterToLogin);
+        pbLoading = findViewById(R.id.pbRegisterLoading);
+        tvErrorMessage = findViewById(R.id.tvRegisterErrorMessage);
+        btnRegister = findViewById(R.id.btnRegisterSubmit);
+    }
 
-        // Register Button Listener
+    private void setupListeners() {
         btnRegister.setOnClickListener(v -> handleRegistration());
 
-        // Back to Login Listener
-        tvToLogin.setOnClickListener(v -> {
-            Log.d(TAG, "RegisterActivity: User navigated back to Login");
-            finish(); // Return to LoginActivity
-        });
+        TextView tvToLogin = findViewById(R.id.tvRegisterToLogin);
+        if (tvToLogin != null) {
+            tvToLogin.setOnClickListener(v -> {
+                Log.d(TAG, "RegisterActivity: Navigating back to Login");
+                finish();
+            });
+        }
+    }
 
-        // System back navigation
+    private void setupBackNavigation() {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -67,51 +85,85 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void handleRegistration() {
+        hideError();
+
         String name = etName.getText() != null ? etName.getText().toString().trim() : "";
         String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
-        String phone = etPhone.getText() != null ? etPhone.getText().toString().trim() : "";
-        String password = etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
-        String confirmPassword = etConfirmPassword.getText() != null ? etConfirmPassword.getText().toString().trim() : "";
+        String password = etPassword.getText() != null ? etPassword.getText().toString() : "";
+        String confirmPassword = etConfirmPassword.getText() != null ? etConfirmPassword.getText().toString() : "";
 
+        // Client validations
         if (TextUtils.isEmpty(name)) {
-            etName.setError("Full Name is required");
+            showError("Full Name is required.");
             etName.requestFocus();
             return;
         }
 
-        if (TextUtils.isEmpty(email)) {
-            etEmail.setError("Email is required");
+        if (!FirebaseAuthService.isValidEmail(email)) {
+            showError("Please enter a valid email address (e.g. user@ghorcycle.com).");
             etEmail.requestFocus();
             return;
         }
 
-        if (TextUtils.isEmpty(phone)) {
-            etPhone.setError("Phone number is required");
-            etPhone.requestFocus();
-            return;
-        }
-
-        if (TextUtils.isEmpty(password) || password.length() < 6) {
-            etPassword.setError("Password must be at least 6 characters");
+        if (!FirebaseAuthService.isValidPassword(password)) {
+            showError("Password must be at least 6 characters long.");
             etPassword.requestFocus();
             return;
         }
 
         if (!password.equals(confirmPassword)) {
-            etConfirmPassword.setError("Passwords do not match");
+            showError("Passwords do not match. Please re-enter.");
             etConfirmPassword.requestFocus();
             return;
         }
 
-        Log.d(TAG, "RegisterActivity: Registration successful for user=" + name + ", email=" + email);
-        Toast.makeText(this, "Account created! Welcome, " + name, Toast.LENGTH_SHORT).show();
+        setLoading(true);
+        Log.d(TAG, "RegisterActivity: Submitting registration for email=" + email + ", name=" + name);
 
-        // Navigate to MainActivity via explicit Intent
-        Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
-        mainIntent.putExtra(LoginActivity.EXTRA_USER_NAME, name);
-        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(mainIntent);
-        finish();
+        FirebaseAuthService.registerUser(email, password, name, new FirebaseAuthService.AuthCallback() {
+            @Override
+            public void onSuccess(FirebaseUser user) {
+                setLoading(false);
+                Log.d(TAG, "RegisterActivity: Account created successfully for UID=" + (user != null ? user.getUid() : ""));
+                Toast.makeText(RegisterActivity.this, "Account created! Welcome to GhorCycle, " + name, Toast.LENGTH_SHORT).show();
+
+                Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
+                mainIntent.putExtra(LoginActivity.EXTRA_USER_NAME, name);
+                mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(mainIntent);
+                finish();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                setLoading(false);
+                Log.d(TAG, "RegisterActivity: Registration failed -> " + errorMessage);
+                showError(errorMessage);
+            }
+        });
+    }
+
+    private void setLoading(boolean isLoading) {
+        if (pbLoading != null) {
+            pbLoading.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        }
+        if (btnRegister != null) {
+            btnRegister.setEnabled(!isLoading);
+        }
+    }
+
+    private void showError(String message) {
+        if (tvErrorMessage != null) {
+            tvErrorMessage.setText(message);
+            tvErrorMessage.setVisibility(View.VISIBLE);
+        }
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private void hideError() {
+        if (tvErrorMessage != null) {
+            tvErrorMessage.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -156,6 +208,5 @@ public class RegisterActivity extends AppCompatActivity {
         Log.d(TAG, "RegisterActivity: onSaveInstanceState() - Saving form fields across rotation");
         if (etName != null) outState.putString("saved_name", etName.getText().toString());
         if (etEmail != null) outState.putString("saved_email", etEmail.getText().toString());
-        if (etPhone != null) outState.putString("saved_phone", etPhone.getText().toString());
     }
 }

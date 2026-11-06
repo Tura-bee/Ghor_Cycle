@@ -12,14 +12,16 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseUser;
+
 /**
- * AddItemActivity enables community members to list their household goods for reuse.
+ * AddItemActivity enables authenticated community members to list household goods.
  *
- * Demonstrates:
- * 1. Form input validation for item details.
- * 2. Explicit Intent construction to ProductDetailsActivity with custom user-entered data.
- * 3. Cancel/Back navigation to MainActivity.
- * 4. Custom Back-press handling using AndroidX OnBackPressedDispatcher.
+ * Implements:
+ * 1. Authentication guard: Unauthenticated users are redirected to LoginActivity.
+ * 2. Form input validation for item details.
+ * 3. Explicit Intent construction to ProductDetailsActivity with custom user-entered data.
+ * 4. Cancel/Back navigation to MainActivity.
  * 5. Complete Activity lifecycle logging.
  */
 public class AddItemActivity extends AppCompatActivity {
@@ -36,7 +38,19 @@ public class AddItemActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "AddItemActivity: onCreate() - Binding form fields and setting action listeners");
+        Log.d(TAG, "AddItemActivity: onCreate() - Checking authentication status");
+
+        // Requirement 8: Prevent unauthenticated users from accessing authenticated-only features
+        FirebaseUser currentUser = FirebaseAuthService.getCurrentUser();
+        if (currentUser == null) {
+            Log.d(TAG, "AddItemActivity: Unauthenticated user attempted access, redirecting to LoginActivity");
+            Toast.makeText(this, "Please sign in to list items on GhorCycle.", Toast.LENGTH_LONG).show();
+            Intent loginIntent = new Intent(AddItemActivity.this, LoginActivity.class);
+            startActivity(loginIntent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_add_item);
 
         etTitle = findViewById(R.id.etItemTitle);
@@ -45,6 +59,14 @@ public class AddItemActivity extends AppCompatActivity {
         etCondition = findViewById(R.id.etItemCondition);
         etSeller = findViewById(R.id.etItemSeller);
         etDescription = findViewById(R.id.etItemDescription);
+
+        // Pre-fill seller with logged-in user profile
+        if (etSeller != null) {
+            String authorName = !TextUtils.isEmpty(currentUser.getDisplayName())
+                    ? currentUser.getDisplayName()
+                    : currentUser.getEmail();
+            etSeller.setText(authorName);
+        }
 
         Button btnBack = findViewById(R.id.btnAddItemBack);
         Button btnPublish = findViewById(R.id.btnPublishItem);
@@ -85,7 +107,7 @@ public class AddItemActivity extends AppCompatActivity {
         }
 
         if (TextUtils.isEmpty(price)) {
-            etPrice.setError("Price is required");
+            etPrice.setError("Price is required (enter 0 for FREE)");
             etPrice.requestFocus();
             return;
         }
@@ -103,7 +125,8 @@ public class AddItemActivity extends AppCompatActivity {
         }
 
         String generatedId = "GC-USER-" + (System.currentTimeMillis() % 10000);
-        String formattedPrice = price.startsWith("৳") ? price : "৳ " + price;
+        boolean isFree = price.equals("0") || price.equalsIgnoreCase("free");
+        String formattedPrice = isFree ? "FREE" : (price.startsWith("৳") ? price : "৳ " + price);
 
         Log.d(TAG, "AddItemActivity: Publishing new item ID=" + generatedId + ", Title=" + title);
         Toast.makeText(this, "Item listed successfully! Opening preview...", Toast.LENGTH_SHORT).show();
@@ -117,6 +140,7 @@ public class AddItemActivity extends AppCompatActivity {
         detailIntent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_CONDITION, condition);
         detailIntent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_SELLER, seller);
         detailIntent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_DESCRIPTION, description);
+        detailIntent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_IS_FREE, isFree);
 
         startActivity(detailIntent);
         finish(); // Finish AddItemActivity so back button from details returns to catalog

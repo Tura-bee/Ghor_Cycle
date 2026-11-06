@@ -4,20 +4,26 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseUser;
+
 /**
  * SplashActivity serves as the launcher entry point for the GhorCycle application.
  *
- * Demonstrates:
+ * Implements:
  * 1. Branded entrance with app name and tagline.
- * 2. Explicit Intent navigation to LoginActivity.
- * 3. Safe Handler postDelayed scheduling with lifecycle cleanup on destroy.
- * 4. Comprehensive Activity lifecycle logging.
+ * 2. Persistent Firebase Authentication check routing:
+ *    - Authenticated users -> MainActivity
+ *    - Unauthenticated users -> LoginActivity
+ * 3. Immediate "Get Started" manual skip and automatic 2.2s transition.
+ * 4. Safe lifecycle timer cleanup on destroy.
+ * 5. Comprehensive Activity lifecycle logging.
  */
 public class SplashActivity extends AppCompatActivity {
 
@@ -31,7 +37,7 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "SplashActivity: onCreate() - Initializing view and timer");
+        Log.d(TAG, "SplashActivity: onCreate() - Initializing view and auth state check");
         setContentView(R.layout.activity_splash);
 
         Button btnGetStarted = findViewById(R.id.btnSplashGetStarted);
@@ -39,18 +45,18 @@ public class SplashActivity extends AppCompatActivity {
         // Immediate navigation when user clicks Get Started
         btnGetStarted.setOnClickListener(v -> {
             Log.d(TAG, "SplashActivity: 'Get Started' clicked by user");
-            navigateToLogin();
+            routeBasedOnAuthState();
         });
 
         // Automatic delayed navigation
         transitionRunnable = () -> {
-            Log.d(TAG, "SplashActivity: Splash delay elapsed, navigating automatically");
-            navigateToLogin();
+            Log.d(TAG, "SplashActivity: Splash delay elapsed, checking auth state automatically");
+            routeBasedOnAuthState();
         };
         splashHandler.postDelayed(transitionRunnable, SPLASH_DELAY_MS);
     }
 
-    private void navigateToLogin() {
+    private void routeBasedOnAuthState() {
         if (hasNavigated) return;
         hasNavigated = true;
 
@@ -58,8 +64,26 @@ public class SplashActivity extends AppCompatActivity {
             splashHandler.removeCallbacks(transitionRunnable);
         }
 
-        // Explicit Intent navigation to LoginActivity
-        Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
+        // Check persistent Firebase Authentication state
+        FirebaseUser currentUser = FirebaseAuthService.getCurrentUser();
+        Intent intent;
+
+        if (currentUser != null) {
+            String displayName = "Neighbor";
+            if (!TextUtils.isEmpty(currentUser.getDisplayName())) {
+                displayName = currentUser.getDisplayName();
+            } else if (!TextUtils.isEmpty(currentUser.getEmail())) {
+                displayName = currentUser.getEmail().split("@")[0];
+            }
+
+            Log.d(TAG, "SplashActivity: Persistent session found for UID=" + currentUser.getUid() + ", routing to MainActivity");
+            intent = new Intent(SplashActivity.this, MainActivity.class);
+            intent.putExtra(LoginActivity.EXTRA_USER_NAME, displayName);
+        } else {
+            Log.d(TAG, "SplashActivity: No authenticated session found, routing to LoginActivity");
+            intent = new Intent(SplashActivity.this, LoginActivity.class);
+        }
+
         startActivity(intent);
         finish(); // Remove Splash from the back stack
     }

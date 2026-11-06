@@ -11,15 +11,19 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+
+import com.google.firebase.auth.FirebaseUser;
 
 /**
- * ProfileActivity displays the user's community presence, cycling statistics, and account management.
+ * ProfileActivity displays the user's community presence, cycling statistics,
+ * and account authentication management.
  *
- * Demonstrates:
- * 1. Intent data extraction for user profile.
- * 2. Explicit Intent navigation back to LoginActivity on sign out.
- * 3. Up/Back navigation to MainActivity.
- * 4. Custom Back-press handling with OnBackPressedDispatcher.
+ * Implements:
+ * 1. Live Firebase Authentication user profile rendering.
+ * 2. Dynamic state handling for authenticated vs guest users.
+ * 3. Real Firebase sign out with task affinity clearing.
+ * 4. Back navigation to MainActivity.
  * 5. Complete Activity lifecycle logging.
  */
 public class ProfileActivity extends AppCompatActivity {
@@ -28,27 +32,45 @@ public class ProfileActivity extends AppCompatActivity {
     public static final String EXTRA_PROFILE_NAME = "com.ghorcycle.extra.PROFILE_NAME";
 
     private String userName;
+    private FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "ProfileActivity: onCreate() - Binding profile views and action handlers");
+        Log.d(TAG, "ProfileActivity: onCreate() - Binding profile views and checking auth status");
         setContentView(R.layout.activity_profile);
 
-        if (getIntent() != null) {
-            userName = getIntent().getStringExtra(EXTRA_PROFILE_NAME);
-        }
-        if (TextUtils.isEmpty(userName)) {
-            userName = "Arif Hossain";
-        }
+        currentUser = FirebaseAuthService.getCurrentUser();
 
         TextView tvName = findViewById(R.id.tvProfileName);
-        tvName.setText(userName);
+        TextView tvEmail = findViewById(R.id.tvProfileEmail);
+        TextView tvLocation = findViewById(R.id.tvProfileLocation);
 
         Button btnBack = findViewById(R.id.btnProfileBack);
         Button btnEdit = findViewById(R.id.btnProfileEdit);
         Button btnListings = findViewById(R.id.btnProfileListings);
         Button btnLogout = findViewById(R.id.btnProfileLogout);
+
+        if (currentUser != null) {
+            String displayName = !TextUtils.isEmpty(currentUser.getDisplayName())
+                    ? currentUser.getDisplayName()
+                    : (currentUser.getEmail() != null ? currentUser.getEmail().split("@")[0] : "Community Member");
+            userName = displayName;
+            tvName.setText(displayName);
+            tvEmail.setText(currentUser.getEmail());
+            tvLocation.setText("UID: " + currentUser.getUid().substring(0, Math.min(12, currentUser.getUid().length())) + "…");
+
+            btnLogout.setText("Sign Out");
+            btnLogout.setBackgroundColor(ContextCompat.getColor(this, R.color.status_danger));
+        } else {
+            userName = "Guest Neighbor";
+            tvName.setText("Guest Neighbor");
+            tvEmail.setText("Not signed in");
+            tvLocation.setText("Sign in to list items and track community recycling");
+
+            btnLogout.setText("Sign In / Register");
+            btnLogout.setBackgroundColor(ContextCompat.getColor(this, R.color.eco_green_primary));
+        }
 
         // Click listeners
         btnBack.setOnClickListener(v -> handleBackNavigation());
@@ -60,12 +82,18 @@ public class ProfileActivity extends AppCompatActivity {
 
         btnListings.setOnClickListener(v -> {
             Log.d(TAG, "ProfileActivity: My listings requested");
-            Toast.makeText(this, "Showing 6 active listings for " + userName, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Showing active listings for " + userName, Toast.LENGTH_SHORT).show();
         });
 
         btnLogout.setOnClickListener(v -> {
-            Log.d(TAG, "ProfileActivity: Logging out user and clearing task stack");
-            Toast.makeText(this, "Signed out successfully", Toast.LENGTH_SHORT).show();
+            if (currentUser != null) {
+                Log.d(TAG, "ProfileActivity: Signing out Firebase user UID=" + currentUser.getUid());
+                FirebaseAuthService.signOut();
+                Toast.makeText(this, "Signed out successfully", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.d(TAG, "ProfileActivity: Navigating guest to LoginActivity");
+            }
+
             Intent loginIntent = new Intent(ProfileActivity.this, LoginActivity.class);
             loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(loginIntent);

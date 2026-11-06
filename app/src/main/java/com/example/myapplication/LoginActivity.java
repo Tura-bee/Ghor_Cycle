@@ -4,8 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,14 +15,16 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseUser;
+
 /**
- * LoginActivity provides user authentication entry for GhorCycle.
+ * LoginActivity provides real Firebase Authentication entry for GhorCycle.
  *
- * Demonstrates:
- * 1. Explicit Intent navigation to MainActivity upon sign in or guest browsing.
- * 2. Explicit Intent navigation to RegisterActivity.
- * 3. Input validation for credentials with user feedback.
- * 4. Custom Back-press handling using AndroidX OnBackPressedDispatcher.
+ * Implements:
+ * 1. Email format and password validation before submission.
+ * 2. Real Firebase Authentication with loading indicators and human-readable error feedback.
+ * 3. Guest browsing option for viewing marketplace items without credentials.
+ * 4. Safe credential handling (passwords are NEVER logged).
  * 5. Complete Activity lifecycle logging.
  */
 public class LoginActivity extends AppCompatActivity {
@@ -30,25 +34,46 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail;
     private EditText etPassword;
+    private ProgressBar pbLoading;
+    private TextView tvErrorMessage;
+    private Button btnLogin;
+    private Button btnGuest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "LoginActivity: onCreate() - Setting layout and registering listeners");
+        Log.d(TAG, "LoginActivity: onCreate() - Binding views and checking auth status");
         setContentView(R.layout.activity_login);
 
+        // Check if already authenticated via Firebase
+        FirebaseUser currentUser = FirebaseAuthService.getCurrentUser();
+        if (currentUser != null) {
+            Log.d(TAG, "LoginActivity: User session already active, routing to MainActivity");
+            navigateToMainActivity(currentUser);
+            return;
+        }
+
+        bindViews();
+        setupListeners();
+        setupBackNavigation();
+    }
+
+    private void bindViews() {
         etEmail = findViewById(R.id.etLoginEmail);
         etPassword = findViewById(R.id.etLoginPassword);
-        Button btnLogin = findViewById(R.id.btnLoginSubmit);
-        Button btnGuest = findViewById(R.id.btnLoginGuest);
-        TextView tvToRegister = findViewById(R.id.tvLoginToRegister);
+        pbLoading = findViewById(R.id.pbLoginLoading);
+        tvErrorMessage = findViewById(R.id.tvLoginErrorMessage);
+        btnLogin = findViewById(R.id.btnLoginSubmit);
+        btnGuest = findViewById(R.id.btnLoginGuest);
+    }
 
+    private void setupListeners() {
         // Sign In Button Listener
         btnLogin.setOnClickListener(v -> handleSignIn());
 
         // Guest Access Button Listener
         btnGuest.setOnClickListener(v -> {
-            Log.d(TAG, "LoginActivity: Guest login selected");
+            Log.d(TAG, "LoginActivity: Guest browsing mode selected");
             Intent guestIntent = new Intent(LoginActivity.this, MainActivity.class);
             guestIntent.putExtra(EXTRA_USER_NAME, "Guest Neighbor");
             startActivity(guestIntent);
@@ -56,46 +81,113 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         // Navigate to RegisterActivity
-        tvToRegister.setOnClickListener(v -> {
-            Log.d(TAG, "LoginActivity: Navigating to RegisterActivity");
-            Intent registerIntent = new Intent(LoginActivity.this, RegisterActivity.class);
-            startActivity(registerIntent);
-        });
+        TextView tvToRegister = findViewById(R.id.tvLoginToRegister);
+        if (tvToRegister != null) {
+            tvToRegister.setOnClickListener(v -> {
+                Log.d(TAG, "LoginActivity: Navigating to RegisterActivity");
+                Intent registerIntent = new Intent(LoginActivity.this, RegisterActivity.class);
+                startActivity(registerIntent);
+            });
+        }
+    }
 
-        // Back button callback
+    private void setupBackNavigation() {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 Log.d(TAG, "LoginActivity: System back pressed - exiting application");
-                finishAffinity(); // Cleanly exit the app
+                finishAffinity();
             }
         });
     }
 
     private void handleSignIn() {
-        String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
-        String password = etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
+        hideError();
 
-        if (TextUtils.isEmpty(email)) {
-            etEmail.setError("Please enter your email or phone");
+        String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
+        String password = etPassword.getText() != null ? etPassword.getText().toString() : "";
+
+        // Client-side validations
+        if (!FirebaseAuthService.isValidEmail(email)) {
+            showError("Please enter a valid email address (e.g. user@ghorcycle.com)");
             etEmail.requestFocus();
             return;
         }
 
         if (TextUtils.isEmpty(password)) {
-            etPassword.setError("Please enter your password");
+            showError("Please enter your password");
             etPassword.requestFocus();
             return;
         }
 
-        Log.d(TAG, "LoginActivity: Sign in successful for " + email);
-        Toast.makeText(this, "Welcome back, " + email + "!", Toast.LENGTH_SHORT).show();
+        if (password.length() < 6) {
+            showError("Password must be at least 6 characters");
+            etPassword.requestFocus();
+            return;
+        }
 
-        // Explicit Intent to MainActivity
+        setLoading(true);
+        Log.d(TAG, "LoginActivity: Submitting login request for user=" + email);
+
+        FirebaseAuthService.loginUser(email, password, new FirebaseAuthService.AuthCallback() {
+            @Override
+            public void onSuccess(FirebaseUser user) {
+                setLoading(false);
+                Log.d(TAG, "LoginActivity: Firebase authentication successful for UID=" + (user != null ? user.getUid() : ""));
+                Toast.makeText(LoginActivity.this, "Welcome back to GhorCycle!", Toast.LENGTH_SHORT).show();
+                navigateToMainActivity(user);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                setLoading(false);
+                Log.d(TAG, "LoginActivity: Authentication failed -> " + errorMessage);
+                showError(errorMessage);
+            }
+        });
+    }
+
+    private void navigateToMainActivity(FirebaseUser user) {
+        String displayName = "Neighbor";
+        if (user != null) {
+            if (!TextUtils.isEmpty(user.getDisplayName())) {
+                displayName = user.getDisplayName();
+            } else if (!TextUtils.isEmpty(user.getEmail())) {
+                displayName = user.getEmail().split("@")[0];
+            }
+        }
+
         Intent mainIntent = new Intent(LoginActivity.this, MainActivity.class);
-        mainIntent.putExtra(EXTRA_USER_NAME, email);
+        mainIntent.putExtra(EXTRA_USER_NAME, displayName);
+        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(mainIntent);
         finish();
+    }
+
+    private void setLoading(boolean isLoading) {
+        if (pbLoading != null) {
+            pbLoading.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        }
+        if (btnLogin != null) {
+            btnLogin.setEnabled(!isLoading);
+        }
+        if (btnGuest != null) {
+            btnGuest.setEnabled(!isLoading);
+        }
+    }
+
+    private void showError(String message) {
+        if (tvErrorMessage != null) {
+            tvErrorMessage.setText(message);
+            tvErrorMessage.setVisibility(View.VISIBLE);
+        }
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    private void hideError() {
+        if (tvErrorMessage != null) {
+            tvErrorMessage.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -107,13 +199,13 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "LoginActivity: onResume() - Activity ready for user credentials");
+        Log.d(TAG, "LoginActivity: onResume() - Activity ready for user interaction");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(TAG, "LoginActivity: onPause() - Activity entering paused state");
+        Log.d(TAG, "LoginActivity: onPause() - Activity pausing");
     }
 
     @Override
@@ -125,7 +217,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        Log.d(TAG, "LoginActivity: onRestart() - Activity returning from stopped state");
+        Log.d(TAG, "LoginActivity: onRestart() - Activity restarting");
     }
 
     @Override
