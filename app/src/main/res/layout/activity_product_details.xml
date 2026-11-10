@@ -57,7 +57,7 @@
         <!-- Product Image Banner -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="220dp"
             android:layout_marginTop="12dp"
             app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="16dp"
@@ -72,10 +72,10 @@
 
                 <ImageView
                     android:id="@+id/ivDetailProductImage"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:contentDescription="Product image view"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_category_furniture"
                     app:tint="@color/eco_green_primary" />
 
@@ -216,12 +216,12 @@
                     android:layout_marginBottom="14dp"
                     android:background="#F1F5F9" />
 
-                <!-- Seller Info Block -->
+                <!-- Location Block -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-bold"
-                    android:text="Seller &amp; Location"
+                    android:text="Pickup Location"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp" />
 
@@ -232,7 +232,7 @@
                     android:layout_marginTop="4dp"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
-                    tools:text="Listed by: Tasnim Rahman (Uttara Sector 7, Dhaka)" />
+                    tools:text="Dhanmondi, Dhaka" />
 
                 <View
                     android:layout_width="match_parent"
@@ -260,8 +260,55 @@
                     android:textSize="14sp"
                     tools:text="High quality Malaysian oak desk with 3 lockable storage drawers and an ergonomic adjustable chair." />
 
-                <!-- Action Buttons -->
+                <!-- Owner Actions Section (Requirement 6) -->
                 <LinearLayout
+                    android:id="@+id/layoutOwnerActions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:text="Listing Management (You Own This)"
+                        android:textColor="@color/eco_green_primary"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDetailEditListing"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:backgroundTint="@color/eco_green_light"
+                        android:text="✎ Edit Listing"
+                        android:textAllCaps="false"
+                        android:textColor="@color/eco_green_dark"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="12dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDetailDeleteListing"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:text="🗑 Delete Listing"
+                        android:textAllCaps="false"
+                        android:textColor="@color/status_danger"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp" />
+
+                </LinearLayout>
+
+                <!-- Buyer Actions (Visible when not owner) -->
+                <LinearLayout
+                    android:id="@+id/layoutBuyerActions"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
@@ -291,18 +338,19 @@
                         app:cornerRadius="12dp"
                         app:strokeColor="@color/eco_green_primary" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnDetailBackHome"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="46dp"
-                        android:layout_marginTop="6dp"
-                        android:text="@string/btn_back_home"
-                        android:textAllCaps="false"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
-
                 </LinearLayout>
+
+                <!-- Back to Catalog -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDetailBackHome"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/btn_back_home"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

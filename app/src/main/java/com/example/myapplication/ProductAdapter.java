@@ -1,5 +1,7 @@
 package com.example.myapplication;
 
+import android.net.Uri;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -106,11 +108,25 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             tvProductCondition.setText(product.getCondition());
             tvProductLocation.setText(product.getLocation());
 
-            // Image placeholder and accessibility
-            if (product.getImageResId() != 0) {
+            // Image handling: custom photo URI or vector drawable
+            if (!TextUtils.isEmpty(product.getImageUrl())) {
+                try {
+                    ivProductImage.setImageURI(Uri.parse(product.getImageUrl()));
+                    ivProductImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    ivProductImage.setPadding(0, 0, 0, 0);
+                } catch (Exception e) {
+                    ivProductImage.setImageResource(product.getImageResId() != 0 ? product.getImageResId() : R.drawable.ic_category_all);
+                    ivProductImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                    ivProductImage.setPadding(26, 26, 26, 26);
+                }
+            } else if (product.getImageResId() != 0) {
                 ivProductImage.setImageResource(product.getImageResId());
+                ivProductImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                ivProductImage.setPadding(26, 26, 26, 26);
             } else {
                 ivProductImage.setImageResource(R.drawable.ic_category_all);
+                ivProductImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                ivProductImage.setPadding(26, 26, 26, 26);
             }
             ivProductImage.setContentDescription("Illustration for " + product.getName() + " in " + product.getCategory());
 

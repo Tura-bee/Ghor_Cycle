@@ -13,6 +13,7 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- Top Navigation -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -25,10 +26,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="← Back"
-                android:textColor="@color/brand_primary_dark"
+                android:textColor="@color/eco_green_primary"
                 android:textSize="14sp" />
 
             <TextView
+                android:id="@+id/tvAddItemTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -42,17 +44,101 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="@string/add_item_subtitle"
+            android:text="Promote sustainable living by re-homing household goods"
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
-        <androidx.cardview.widget.CardView
+        <!-- Photo Picker Card (Requirement 8 & 9) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardImagePicker"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_marginTop="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="@color/card_surface"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="1dp"
+            app:strokeColor="#CBD5E1"
+            app:strokeWidth="1.5dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <!-- Placeholder view when no photo selected -->
+                <LinearLayout
+                    android:id="@+id/layoutPhotoPlaceholder"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:contentDescription="Select product photo"
+                        android:src="@drawable/ic_nav_add"
+                        app:tint="@color/eco_green_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Select Product Photo from Device"
+                        android:textColor="@color/eco_green_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Tap to browse gallery (JPG or PNG)"
+                        android:textColor="@color/text_muted"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Selected photo preview -->
+                <ImageView
+                    android:id="@+id/ivSelectedPhoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="Selected product photo preview"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+
+                <!-- Change Photo badge -->
+                <TextView
+                    android:id="@+id/tvChangePhotoBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/bg_category_chip_selected"
+                    android:paddingStart="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="4dp"
+                    android:text="Change Photo"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Form Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             app:cardBackgroundColor="@color/card_surface"
             app:cardCornerRadius="14dp"
-            app:cardElevation="2dp">
+            app:cardElevation="2dp"
+            app:strokeColor="#E2E8F0"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -73,12 +159,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="6dp"
-                    android:background="@drawable/bg_edit_text"
+                    android:background="@drawable/bg_search_bar"
                     android:hint="@string/hint_item_title"
                     android:inputType="textCapWords"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp" />
 
+                <!-- Category Spinner -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -88,16 +177,33 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <EditText
-                    android:id="@+id/etItemCategory"
+                <Spinner
+                    android:id="@+id/spinnerCategory"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="6dp"
-                    android:background="@drawable/bg_edit_text"
-                    android:hint="@string/hint_item_category"
-                    android:inputType="textCapWords"
+                    android:background="@drawable/bg_search_bar"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
+
+                <!-- Transaction Type (Sell, Free, Donate, Recycle) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Listing Type *"
                     android:textColor="@color/text_primary"
-                    android:textSize="14sp" />
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <Spinner
+                    android:id="@+id/spinnerTransactionType"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_search_bar"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -105,6 +211,7 @@
                     android:layout_marginTop="12dp"
                     android:orientation="horizontal">
 
+                    <!-- Price Field -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -112,6 +219,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvPriceLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Price (৳ BDT) *"
@@ -124,9 +232,11 @@
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
                             android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_edit_text"
+                            android:background="@drawable/bg_search_bar"
                             android:hint="e.g. 4500"
                             android:inputType="numberDecimal"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
                     </LinearLayout>
@@ -135,6 +245,7 @@
                         android:layout_width="12dp"
                         android:layout_height="1dp" />
 
+                    <!-- Condition Spinner -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -149,39 +260,41 @@
                             android:textSize="13sp"
                             android:textStyle="bold" />
 
-                        <EditText
-                            android:id="@+id/etItemCondition"
+                        <Spinner
+                            android:id="@+id/spinnerCondition"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
                             android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_edit_text"
-                            android:hint="e.g. Gently Used"
-                            android:inputType="textCapWords"
-                            android:textColor="@color/text_primary"
-                            android:textSize="14sp" />
+                            android:background="@drawable/bg_search_bar"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp" />
                     </LinearLayout>
                 </LinearLayout>
 
+                <!-- Location Field -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="Your Name / Seller Name *"
+                    android:text="Location / Area *"
                     android:textColor="@color/text_primary"
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <EditText
-                    android:id="@+id/etItemSeller"
+                    android:id="@+id/etItemLocation"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="6dp"
-                    android:background="@drawable/bg_edit_text"
-                    android:hint="e.g. Arif Hossain (Dhaka)"
-                    android:inputType="textPersonName"
+                    android:background="@drawable/bg_search_bar"
+                    android:hint="e.g. Dhanmondi, Dhaka"
+                    android:inputType="textPostalAddress"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp" />
 
+                <!-- Description Field -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -194,42 +307,67 @@
                 <EditText
                     android:id="@+id/etItemDescription"
                     android:layout_width="match_parent"
-                    android:layout_height="80dp"
+                    android:layout_height="90dp"
                     android:layout_marginTop="6dp"
-                    android:background="@drawable/bg_edit_text"
+                    android:background="@drawable/bg_search_bar"
                     android:gravity="top|start"
                     android:hint="@string/hint_item_description"
                     android:inputType="textMultiLine"
-                    android:lines="3"
+                    android:padding="12dp"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp" />
 
+                <!-- Loading State Indicator -->
+                <ProgressBar
+                    android:id="@+id/pbAddItemLoading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="16dp"
+                    android:indeterminateTint="@color/eco_green_primary"
+                    android:visibility="gone" />
+
+                <!-- Submit Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnPublishItem"
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
+                    android:layout_height="50dp"
                     android:layout_marginTop="20dp"
-                    android:backgroundTint="@color/brand_accent"
+                    android:backgroundTint="@color/eco_green_primary"
                     android:text="@string/btn_publish_item"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
                     android:textSize="15sp"
                     app:cornerRadius="10dp" />
 
+                <!-- Delete Listing Button (Visible in Edit mode only) -->
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCancelAddItem"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:id="@+id/btnDeleteItem"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="6dp"
+                    android:text="Delete This Listing"
+                    android:textAllCaps="false"
+                    android:textColor="@color/status_danger"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <!-- Cancel Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCancelAddItem"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="2dp"
                     android:text="@string/btn_cancel"
                     android:textAllCaps="false"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
-                    app:cornerRadius="10dp" />
+                    android:textSize="14sp" />
 
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 </ScrollView>

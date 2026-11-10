@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout layoutErrorState;
     private TextView tvEmptyMessage;
     private BottomNavigationView bottomNav;
+    private ListenerRegistration productListenerRegistration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -213,16 +215,31 @@ public class MainActivity extends AppCompatActivity {
         layoutEmptyState.setVisibility(View.GONE);
         rvProducts.setVisibility(View.GONE);
 
-        // Fetch sample products from Java data source
-        try {
-            masterProductList = SampleDataProvider.getSampleProducts();
-            layoutLoadingState.setVisibility(View.GONE);
-            applyFilters();
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading marketplace data", e);
-            layoutLoadingState.setVisibility(View.GONE);
-            layoutErrorState.setVisibility(View.VISIBLE);
+        if (productListenerRegistration != null) {
+            productListenerRegistration.remove();
+            productListenerRegistration = null;
         }
+
+        productListenerRegistration = FirestoreProductService.listenToProducts(new FirestoreProductService.ProductListCallback() {
+            @Override
+            public void onLoaded(List<Product> products) {
+                layoutLoadingState.setVisibility(View.GONE);
+                layoutErrorState.setVisibility(View.GONE);
+                masterProductList = products != null ? products : new ArrayList<>();
+                applyFilters();
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Log.e(TAG, "Error loading marketplace data: " + errorMessage);
+                layoutLoadingState.setVisibility(View.GONE);
+                if (masterProductList == null || masterProductList.isEmpty()) {
+                    layoutErrorState.setVisibility(View.VISIBLE);
+                } else {
+                    Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void applyFilters() {
@@ -327,15 +344,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void openProductDetails(Product product) {
         Intent intent = new Intent(MainActivity.this, ProductDetailsActivity.class);
-        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_ID, product.getId());
-        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_NAME, product.getName());
+        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_ID, product.getProductId());
+        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_NAME, product.getTitle());
         intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_PRICE, product.getFormattedPrice());
         intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_CATEGORY, product.getCategory());
         intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_CONDITION, product.getCondition());
-        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_SELLER, product.getSeller() + " (" + product.getLocation() + ")");
+        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_SELLER, product.getLocation());
         intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_DESCRIPTION, product.getDescription());
         intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_IMAGE_RES, product.getImageResId());
         intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_IS_FREE, product.isFree());
+        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_OWNER_ID, product.getOwnerId());
+        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_IMAGE_URL, product.getImageUrl());
         startActivity(intent);
     }
 
@@ -375,6 +394,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "MainActivity: onDestroy() - Releasing resources");
+        if (productListenerRegistration != null) {
+            productListenerRegistration.remove();
+            productListenerRegistration = null;
+        }
     }
 
     @Override

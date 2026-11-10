@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: products
+    // Document ID: {productId}
+    // Fields:
+    //   - productId: string (required, immutable) - Unique product listing identifier matching document ID
+    //   - ownerId: string (required, immutable) - Firebase Auth UID of listing owner
+    //   - title: string (required, 2-120 chars) - Title of the product
+    //   - description: string (required, 3-2000 chars) - Detailed description
+    //   - category: string (required, enum) - One of: 'Furniture', 'Clothes', 'Books', 'Kitchen Items', 'Electronics', 'Plastic', 'Paper', 'Metal'
+    //   - condition: string (required, 1-100 chars) - Item condition (e.g., 'Like New', 'Used', 'Refurbished')
+    //   - transactionType: string (required, enum) - One of: 'Sell', 'Free', 'Donate', 'Recycle'
+    //   - price: number (required, >= 0) - Item price in currency units
+    //   - location: string (required, 2-200 chars) - Community / pickup location
+    //   - status: string (required, enum) - One of: 'Available', 'Reserved', 'Sold', 'Cycled'
+    //   - createdAt: timestamp (required, immutable) - Timestamp when listing was created
+    //   - updatedAt: timestamp (required) - Timestamp when listing was last updated
+    //   - imageUrl: string (optional, 1-2000 chars) - Optional image URL or storage reference
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the resource
+    function isOwner(ownerId) {
+      return isAuthenticated() && request.auth.uid == ownerId;
+    }
+
+    // Validate allowed keys (strict schema enforcement to prevent schema pollution)
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate required fields exist
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate string length bounds
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate optional string length if field exists
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+        (request.resource.data[field] is string &&
+         request.resource.data[field].size() >= minLen &&
+         request.resource.data[field].size() <= maxLen);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidProduct(data) {
+      let allowedFields = [
+        'productId', 'ownerId', 'title', 'description',
+        'category', 'condition', 'transactionType', 'price',
+        'location', 'status', 'createdAt', 'updatedAt', 'imageUrl'
+      ];
+      let requiredFields = [
+        'productId', 'ownerId', 'title', 'description',
+        'category', 'condition', 'transactionType', 'price',
+        'location', 'status', 'createdAt', 'updatedAt'
+      ];
+      let validCategories = [
+        'Furniture', 'Clothes', 'Books', 'Kitchen Items',
+        'Electronics', 'Plastic', 'Paper', 'Metal'
+      ];
+      let validStatuses = [
+        'Available', 'Reserved', 'Sold', 'Cycled'
+      ];
+      let validTransactionTypes = [
+        'Sell', 'Free', 'Donate', 'Recycle'
+      ];
+
+      return hasOnlyAllowedFields(allowedFields) &&
+        hasRequiredFields(requiredFields) &&
+        data.productId is string && data.productId.size() > 0 && data.productId.size() <= 128 &&
+        data.ownerId is string && data.ownerId.size() > 0 && data.ownerId.size() <= 128 &&
+        validStringLength('title', 2, 120) &&
+        validStringLength('description', 3, 2000) &&
+        data.category in validCategories &&
+        validStringLength('condition', 1, 100) &&
+        data.transactionType in validTransactionTypes &&
+        data.price is number && data.price >= 0 &&
+        validStringLength('location', 2, 200) &&
+        data.status in validStatuses &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp &&
+        isValidOptionalString('imageUrl', 1, 2000);
+    }
+
+    // ===============================================================
+    // Security Rules
+    // ===============================================================
+
+    // Root collection: products
+    match /products/{productId} {
+      // Public read access for community marketplace browsing
+      allow read: if true;
+
+      // Create: Authenticated owner, matching ID, schema conforming
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.productId == productId &&
+        isValidProduct(request.resource.data);
+
+      // Update: Authenticated owner, immutable productId & ownerId & createdAt, schema conforming
+      allow update: if isAuthenticated() &&
+        resource.data.ownerId == request.auth.uid &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.productId == resource.data.productId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidProduct(request.resource.data);
+
+      // Delete: Listing owner only
+      allow delete: if isAuthenticated() &&
+        resource.data.ownerId == request.auth.uid;
+    }
+
+    // Default deny for all other collections and documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
