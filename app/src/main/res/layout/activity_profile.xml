@@ -237,6 +237,29 @@
                     app:cornerRadius="8dp" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnProfileEcoImpact"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="🌱 Eco-Impact Dashboard"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    app:cornerRadius="8dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnProfileRecyclingDirectory"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="♻ Recycling Centers Directory"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    app:cornerRadius="8dp" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnProfileLogout"
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="match_parent"

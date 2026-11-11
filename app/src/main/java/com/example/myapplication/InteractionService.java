@@ -450,4 +450,62 @@ public class InteractionService {
             callback.onFailure(e.getMessage());
         }
     }
+
+    /**
+     * Fetch requests where the given user is either requester or owner.
+     */
+    public static void fetchUserRequests(final String userId, final RequestListCallback callback) {
+        if (!isFirestoreConfigured()) {
+            List<ItemRequest> matching = new ArrayList<>();
+            for (ItemRequest r : inMemoryRequestsCache) {
+                if (userId != null && (userId.equals(r.getOwnerId()) || userId.equals(r.getRequesterId()))) {
+                    matching.add(r);
+                }
+            }
+            callback.onLoaded(matching);
+            return;
+        }
+
+        try {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            db.collection(COLLECTION_REQUESTS)
+                    .whereEqualTo("requesterId", userId)
+                    .get()
+                    .addOnSuccessListener(reqSnap -> {
+                        final List<ItemRequest> results = new ArrayList<>();
+                        if (reqSnap != null) {
+                            for (DocumentSnapshot doc : reqSnap.getDocuments()) {
+                                ItemRequest r = doc.toObject(ItemRequest.class);
+                                if (r != null) {
+                                    r.setRequestId(doc.getId());
+                                    results.add(r);
+                                }
+                            }
+                        }
+                        db.collection(COLLECTION_REQUESTS)
+                                .whereEqualTo("ownerId", userId)
+                                .get()
+                                .addOnSuccessListener(ownerSnap -> {
+                                    if (ownerSnap != null) {
+                                        for (DocumentSnapshot doc : ownerSnap.getDocuments()) {
+                                            ItemRequest r = doc.toObject(ItemRequest.class);
+                                            if (r != null) {
+                                                r.setRequestId(doc.getId());
+                                                results.add(r);
+                                            }
+                                        }
+                                    }
+                                    callback.onLoaded(results);
+                                })
+                                .addOnFailureListener(e -> callback.onLoaded(results));
+                    })
+                    .addOnFailureListener(e -> callback.onError(e.getMessage()));
+        } catch (Exception e) {
+            callback.onError(e.getMessage());
+        }
+    }
+
+    public static List<ItemRequest> getInMemoryRequestsCache() {
+        return inMemoryRequestsCache;
+    }
 }

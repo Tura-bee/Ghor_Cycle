@@ -49,6 +49,8 @@ public class ProfileActivity extends AppCompatActivity {
         Button btnBack = findViewById(R.id.btnProfileBack);
         Button btnEdit = findViewById(R.id.btnProfileEdit);
         Button btnListings = findViewById(R.id.btnProfileListings);
+        Button btnEcoImpact = findViewById(R.id.btnProfileEcoImpact);
+        Button btnRecyclingDirectory = findViewById(R.id.btnProfileRecyclingDirectory);
         Button btnLogout = findViewById(R.id.btnProfileLogout);
 
         if (currentUser != null) {
@@ -84,6 +86,22 @@ public class ProfileActivity extends AppCompatActivity {
             Log.d(TAG, "ProfileActivity: My listings requested");
             Toast.makeText(this, "Showing active listings for " + userName, Toast.LENGTH_SHORT).show();
         });
+
+        if (btnEcoImpact != null) {
+            btnEcoImpact.setOnClickListener(v -> {
+                Log.d(TAG, "ProfileActivity: Launching EcoImpactActivity");
+                Intent intent = new Intent(ProfileActivity.this, EcoImpactActivity.class);
+                startActivity(intent);
+            });
+        }
+
+        if (btnRecyclingDirectory != null) {
+            btnRecyclingDirectory.setOnClickListener(v -> {
+                Log.d(TAG, "ProfileActivity: Launching RecyclingDirectoryActivity");
+                Intent intent = new Intent(ProfileActivity.this, RecyclingDirectoryActivity.class);
+                startActivity(intent);
+            });
+        }
 
         btnLogout.setOnClickListener(v -> {
             if (currentUser != null) {

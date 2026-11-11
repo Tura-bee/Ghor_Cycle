@@ -64,6 +64,12 @@ public class ItemRequest implements Serializable {
         this.updatedAt = Timestamp.now();
     }
 
+    public ItemRequest(String requestId, String productId, String ownerId, String requesterId,
+                       String requestType, String message, String status) {
+        this(requestId, productId, "Sample Item", ownerId, requesterId, "user@example.com",
+             requestType, "", message, status);
+    }
+
     public String getRequestId() {
         return requestId;
     }

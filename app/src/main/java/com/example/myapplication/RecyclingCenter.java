@@ -101,4 +101,12 @@ public class RecyclingCenter implements Serializable {
     public boolean hasValidCoordinates() {
         return latitude != 0.0 && longitude != 0.0;
     }
+
+    public boolean acceptsMaterial(String material) {
+        if (material == null || acceptedMaterials == null) return false;
+        for (String m : acceptedMaterials) {
+            if (m.equalsIgnoreCase(material)) return true;
+        }
+        return false;
+    }
 }

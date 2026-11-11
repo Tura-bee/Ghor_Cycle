@@ -111,6 +111,10 @@ public class RecyclingDataProvider {
         return list;
     }
 
+    public static List<RecyclingCenter> filterCenters(String materialFilter, String query) {
+        return filterCenters(getSampleCenters(), materialFilter, query);
+    }
+
     /**
      * Filters centers by accepted material and search text query (name or address).
      */
@@ -122,6 +126,7 @@ public class RecyclingDataProvider {
 
         String normalizedQuery = query != null ? query.trim().toLowerCase(Locale.getDefault()) : "";
         boolean isAllMaterials = materialFilter == null
+                || materialFilter.equalsIgnoreCase("All")
                 || materialFilter.equalsIgnoreCase(MATERIAL_ALL)
                 || materialFilter.trim().isEmpty();
 

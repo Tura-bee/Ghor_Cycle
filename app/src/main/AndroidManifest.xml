@@ -67,6 +67,17 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
 
+        <!-- Recycling Directory & Eco-Impact Hub (Stage 8) -->
+        <activity
+            android:name=".RecyclingDirectoryActivity"
+            android:exported="false"
+            android:parentActivityName=".ProfileActivity" />
+
+        <activity
+            android:name=".EcoImpactActivity"
+            android:exported="false"
+            android:parentActivityName=".ProfileActivity" />
+
     </application>
 
 </manifest>
