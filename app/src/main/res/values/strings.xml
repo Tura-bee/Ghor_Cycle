@@ -10,8 +10,10 @@
     <string name="hint_email_phone">Email or Phone Number</string>
     <string name="hint_password">Password</string>
     <string name="btn_login">Sign In</string>
+    <string name="btn_sign_in_google">Continue with Google</string>
     <string name="btn_browse_guest">Continue as Guest</string>
     <string name="prompt_no_account">Don\'t have an account? Register</string>
+    <string name="default_web_client_id">603043237024-web</string>
 
     <string name="register_title">Join GhorCycle</string>
     <string name="register_subtitle">Start buying, selling &amp; recycling today</string>

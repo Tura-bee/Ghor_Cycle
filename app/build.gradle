@@ -1,14 +1,14 @@
 plugins {
     id 'com.android.application'
-    // id 'com.google.gms.google-services' // Note: Enable once google-services.json is placed in app/
+    id 'com.google.gms.google-services'
 }
 
 android {
-    namespace 'com.example.myapplication'
+    namespace 'com.example.ghor_cycle'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.myapplication"
+        applicationId "com.example.ghor_cycle"
         minSdk 24
         targetSdk 33
         versionCode 1
@@ -41,7 +41,11 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:32.8.0')
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-database'
     implementation 'com.google.firebase:firebase-storage'
+
+    // Play Services Auth for Google Sign-In
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
 
     // AndroidX WorkManager for background tasks and offline synchronization (Stage 6)
     implementation 'androidx.work:work-runtime:2.8.1'
