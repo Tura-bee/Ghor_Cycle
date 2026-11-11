@@ -30,6 +30,7 @@ public class Product implements Serializable {
     // Status Types
     public static final String STATUS_AVAILABLE = "Available";
     public static final String STATUS_RESERVED = "Reserved";
+    public static final String STATUS_COMPLETED = "Completed";
     public static final String STATUS_SOLD = "Sold";
     public static final String STATUS_CYCLED = "Cycled";
 
@@ -193,6 +194,23 @@ public class Product implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    @Exclude
+    public boolean isAvailable() {
+        return status == null || STATUS_AVAILABLE.equalsIgnoreCase(status);
+    }
+
+    @Exclude
+    public boolean isReserved() {
+        return STATUS_RESERVED.equalsIgnoreCase(status);
+    }
+
+    @Exclude
+    public boolean isCompleted() {
+        return STATUS_COMPLETED.equalsIgnoreCase(status)
+                || STATUS_SOLD.equalsIgnoreCase(status)
+                || STATUS_CYCLED.equalsIgnoreCase(status);
     }
 
     public Timestamp getCreatedAt() {

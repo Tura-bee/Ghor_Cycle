@@ -7,6 +7,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -21,6 +23,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.List;
 
 /**
  * ProductDetailsActivity displays comprehensive details for an item in GhorCycle.
@@ -48,6 +52,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
     public static final String EXTRA_PRODUCT_IS_FREE = "com.ghorcycle.extra.PRODUCT_IS_FREE";
     public static final String EXTRA_PRODUCT_OWNER_ID = "com.ghorcycle.extra.PRODUCT_OWNER_ID";
     public static final String EXTRA_PRODUCT_IMAGE_URL = "com.ghorcycle.extra.PRODUCT_IMAGE_URL";
+    public static final String EXTRA_PRODUCT_STATUS = "com.ghorcycle.extra.PRODUCT_STATUS";
+    public static final String EXTRA_PRODUCT_TRANSACTION_TYPE = "com.ghorcycle.extra.PRODUCT_TRANSACTION_TYPE";
 
     private String productId;
     private String productName;
@@ -60,7 +66,11 @@ public class ProductDetailsActivity extends AppCompatActivity {
     private boolean isProductFree = false;
     private String ownerId = "";
     private String imageUrl = "";
+    private String productStatus = Product.STATUS_AVAILABLE;
+    private String productTransactionType = Product.TYPE_SELL;
 
+    private TextView tvStatusBadge;
+    private TextView tvUnavailableBanner;
     private ActivityResultLauncher<Intent> editLauncher;
 
     @Override
@@ -100,6 +110,14 @@ public class ProductDetailsActivity extends AppCompatActivity {
             isProductFree = getIntent().getBooleanExtra(EXTRA_PRODUCT_IS_FREE, false);
             ownerId = getIntent().getStringExtra(EXTRA_PRODUCT_OWNER_ID);
             imageUrl = getIntent().getStringExtra(EXTRA_PRODUCT_IMAGE_URL);
+            String statusExtra = getIntent().getStringExtra(EXTRA_PRODUCT_STATUS);
+            if (!TextUtils.isEmpty(statusExtra)) {
+                productStatus = statusExtra;
+            }
+            String typeExtra = getIntent().getStringExtra(EXTRA_PRODUCT_TRANSACTION_TYPE);
+            if (!TextUtils.isEmpty(typeExtra)) {
+                productTransactionType = typeExtra;
+            }
         }
 
         // Apply fallbacks if any extra was not supplied
@@ -137,6 +155,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
         TextView tvName = findViewById(R.id.tvDetailName);
         TextView tvPrice = findViewById(R.id.tvDetailPrice);
         TextView tvFreeBadge = findViewById(R.id.tvDetailFreeBadge);
+        tvStatusBadge = findViewById(R.id.tvDetailStatusBadge);
         TextView tvCategory = findViewById(R.id.tvDetailCategory);
         TextView tvCondition = findViewById(R.id.tvDetailCondition);
         TextView tvSeller = findViewById(R.id.tvDetailSeller);
@@ -164,6 +183,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
             tvFreeBadge.setVisibility(View.GONE);
         }
 
+        updateStatusUI();
+
         // Image handling: custom photo URI or category placeholder
         if (!TextUtils.isEmpty(imageUrl)) {
             try {
@@ -183,12 +204,36 @@ public class ProductDetailsActivity extends AppCompatActivity {
         btnBackHome.setOnClickListener(v -> handleNavigateBack());
     }
 
+    private void updateStatusUI() {
+        if (tvStatusBadge != null) {
+            tvStatusBadge.setText("Status: " + productStatus);
+            if (Product.STATUS_COMPLETED.equalsIgnoreCase(productStatus)
+                    || Product.STATUS_SOLD.equalsIgnoreCase(productStatus)
+                    || Product.STATUS_CYCLED.equalsIgnoreCase(productStatus)) {
+                tvStatusBadge.setBackgroundResource(R.drawable.bg_badge_condition);
+                tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+            } else if (Product.STATUS_RESERVED.equalsIgnoreCase(productStatus)) {
+                tvStatusBadge.setBackgroundResource(R.drawable.bg_badge_free);
+                tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.white));
+            } else {
+                tvStatusBadge.setBackgroundResource(R.drawable.bg_role_tag);
+                tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.eco_green_dark));
+            }
+        }
+    }
+
     private void setupOwnerAndBuyerActions() {
         LinearLayout layoutOwnerActions = findViewById(R.id.layoutOwnerActions);
         LinearLayout layoutBuyerActions = findViewById(R.id.layoutBuyerActions);
 
         Button btnEditListing = findViewById(R.id.btnDetailEditListing);
         Button btnDeleteListing = findViewById(R.id.btnDetailDeleteListing);
+        Button btnViewRequests = findViewById(R.id.btnDetailViewRequests);
+        Button btnMarkCompleted = findViewById(R.id.btnDetailMarkCompleted);
+
+        tvUnavailableBanner = findViewById(R.id.tvDetailUnavailableBanner);
+        Button btnRequestDonation = findViewById(R.id.btnDetailRequestDonation);
+        Button btnProposeExchange = findViewById(R.id.btnDetailProposeExchange);
         Button btnContactSeller = findViewById(R.id.btnDetailContactSeller);
         Button btnMakeOffer = findViewById(R.id.btnDetailMakeOffer);
 
@@ -198,6 +243,21 @@ public class ProductDetailsActivity extends AppCompatActivity {
         if (isOwner) {
             layoutOwnerActions.setVisibility(View.VISIBLE);
             layoutBuyerActions.setVisibility(View.GONE);
+
+            boolean isAlreadyCompleted = Product.STATUS_COMPLETED.equalsIgnoreCase(productStatus)
+                    || Product.STATUS_SOLD.equalsIgnoreCase(productStatus)
+                    || Product.STATUS_CYCLED.equalsIgnoreCase(productStatus);
+
+            if (isAlreadyCompleted) {
+                btnMarkCompleted.setEnabled(false);
+                btnMarkCompleted.setText("✔ Transaction Completed");
+            } else {
+                btnMarkCompleted.setEnabled(true);
+                btnMarkCompleted.setText("✔ Mark as Completed / Cycled");
+                btnMarkCompleted.setOnClickListener(v -> markProductAsCompleted());
+            }
+
+            btnViewRequests.setOnClickListener(v -> showRequestsDialog());
 
             btnEditListing.setOnClickListener(v -> {
                 Log.d(TAG, "ProductDetailsActivity: Owner opening Edit mode for ID=" + productId);
@@ -212,7 +272,7 @@ public class ProductDetailsActivity extends AppCompatActivity {
                         isProductFree ? 0.0 : parsePrice(productPrice),
                         productSeller,
                         imageUrl,
-                        Product.STATUS_AVAILABLE
+                        productStatus
                 );
 
                 Intent editIntent = new Intent(ProductDetailsActivity.this, AddItemActivity.class);
@@ -245,16 +305,259 @@ public class ProductDetailsActivity extends AppCompatActivity {
             layoutOwnerActions.setVisibility(View.GONE);
             layoutBuyerActions.setVisibility(View.VISIBLE);
 
-            btnContactSeller.setOnClickListener(v -> {
-                Log.d(TAG, "ProductDetailsActivity: Contact seller clicked");
-                Toast.makeText(this, "Connecting to seller... (Messaging feature coming soon)", Toast.LENGTH_SHORT).show();
-            });
+            boolean isCompleted = Product.STATUS_COMPLETED.equalsIgnoreCase(productStatus)
+                    || Product.STATUS_SOLD.equalsIgnoreCase(productStatus)
+                    || Product.STATUS_CYCLED.equalsIgnoreCase(productStatus);
+            boolean isReserved = Product.STATUS_RESERVED.equalsIgnoreCase(productStatus);
 
-            btnMakeOffer.setOnClickListener(v -> {
-                Log.d(TAG, "ProductDetailsActivity: Make offer clicked for " + productName);
-                Toast.makeText(this, "Offer feature for " + productName + " coming soon!", Toast.LENGTH_SHORT).show();
-            });
+            if (isCompleted || isReserved) {
+                tvUnavailableBanner.setVisibility(View.VISIBLE);
+                if (isCompleted) {
+                    tvUnavailableBanner.setText("This item has been completed and is no longer available.");
+                } else {
+                    tvUnavailableBanner.setText("This item is currently reserved for a neighbor.");
+                }
+                btnRequestDonation.setEnabled(false);
+                btnRequestDonation.setAlpha(0.4f);
+                btnProposeExchange.setEnabled(false);
+                btnProposeExchange.setAlpha(0.4f);
+                btnContactSeller.setEnabled(false);
+                btnContactSeller.setAlpha(0.4f);
+                btnMakeOffer.setEnabled(false);
+                btnMakeOffer.setAlpha(0.4f);
+            } else {
+                tvUnavailableBanner.setVisibility(View.GONE);
+                btnRequestDonation.setEnabled(true);
+                btnRequestDonation.setAlpha(1.0f);
+                btnProposeExchange.setEnabled(true);
+                btnProposeExchange.setAlpha(1.0f);
+                btnContactSeller.setEnabled(true);
+                btnContactSeller.setAlpha(1.0f);
+                btnMakeOffer.setEnabled(true);
+                btnMakeOffer.setAlpha(1.0f);
+
+                btnRequestDonation.setOnClickListener(v -> showSubmitRequestDialog(ItemRequest.TYPE_DONATION));
+                btnProposeExchange.setOnClickListener(v -> showSubmitRequestDialog(ItemRequest.TYPE_EXCHANGE));
+
+                btnContactSeller.setOnClickListener(v -> {
+                    Toast.makeText(this, "Connecting with seller in " + productSeller + "...", Toast.LENGTH_SHORT).show();
+                });
+
+                btnMakeOffer.setOnClickListener(v -> {
+                    showSubmitRequestDialog(ItemRequest.TYPE_DONATION);
+                });
+            }
         }
+    }
+
+    private void showSubmitRequestDialog(final String requestType) {
+        FirebaseUser currentUser = FirebaseAuthService.getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(this, "Please log in to send a request.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (currentUser.getUid().equals(ownerId)) {
+            Toast.makeText(this, "Invalid action: You cannot request your own product listing.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_submit_request, null);
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+
+        TextView tvTitle = dialogView.findViewById(R.id.tvDialogRequestTitle);
+        TextView tvSubtitle = dialogView.findViewById(R.id.tvDialogRequestSubtitle);
+        LinearLayout layoutOffered = dialogView.findViewById(R.id.layoutOfferedItemField);
+        EditText etOffered = dialogView.findViewById(R.id.etDialogOfferedItem);
+        EditText etMessage = dialogView.findViewById(R.id.etDialogRequestMessage);
+        Button btnCancel = dialogView.findViewById(R.id.btnDialogCancelRequest);
+        Button btnSubmit = dialogView.findViewById(R.id.btnDialogSubmitRequest);
+
+        if (ItemRequest.TYPE_EXCHANGE.equalsIgnoreCase(requestType)) {
+            tvTitle.setText("Propose Barter / Exchange");
+            tvSubtitle.setText("Offer an item in exchange for \"" + productName + "\".");
+            layoutOffered.setVisibility(View.VISIBLE);
+        } else {
+            tvTitle.setText("Request Donated / Free Item");
+            tvSubtitle.setText("Send a claim request for \"" + productName + "\".");
+            layoutOffered.setVisibility(View.GONE);
+        }
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSubmit.setOnClickListener(v -> {
+            String message = etMessage.getText().toString().trim();
+            String offeredItem = etOffered.getText().toString().trim();
+
+            if (ItemRequest.TYPE_EXCHANGE.equalsIgnoreCase(requestType) && TextUtils.isEmpty(offeredItem)) {
+                etOffered.setError("Please describe the item you are offering.");
+                etOffered.requestFocus();
+                return;
+            }
+
+            if (TextUtils.isEmpty(message)) {
+                etMessage.setError("Please enter a note for the owner.");
+                etMessage.requestFocus();
+                return;
+            }
+
+            ItemRequest request = new ItemRequest(
+                    null,
+                    productId,
+                    productName,
+                    ownerId,
+                    currentUser.getUid(),
+                    currentUser.getEmail(),
+                    requestType,
+                    offeredItem,
+                    message,
+                    ItemRequest.STATUS_PENDING
+            );
+
+            Product currentProduct = new Product(
+                    productId, ownerId, productName, productDescription,
+                    productCategory, productCondition, productTransactionType,
+                    parsePrice(productPrice), productSeller, imageUrl, productStatus
+            );
+
+            btnSubmit.setEnabled(false);
+            InteractionService.submitRequest(request, currentProduct, new InteractionService.RequestCallback() {
+                @Override
+                public void onSuccess(ItemRequest createdRequest) {
+                    dialog.dismiss();
+                    Toast.makeText(ProductDetailsActivity.this, "Request submitted successfully to the owner!", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onFailure(String errorMessage) {
+                    btnSubmit.setEnabled(true);
+                    Toast.makeText(ProductDetailsActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+
+        dialog.show();
+    }
+
+    private void showRequestsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_view_requests, null);
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+
+        ImageButton btnClose = dialogView.findViewById(R.id.btnCloseRequestsDialog);
+        TextView tvEmpty = dialogView.findViewById(R.id.tvNoRequestsEmpty);
+        LinearLayout container = dialogView.findViewById(R.id.containerRequestsList);
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        InteractionService.listenToProductRequests(productId, new InteractionService.RequestListCallback() {
+            @Override
+            public void onLoaded(List<ItemRequest> requests) {
+                container.removeAllViews();
+                if (requests == null || requests.isEmpty()) {
+                    tvEmpty.setVisibility(View.VISIBLE);
+                } else {
+                    tvEmpty.setVisibility(View.GONE);
+                    for (ItemRequest r : requests) {
+                        View row = getLayoutInflater().inflate(R.layout.item_request_row, container, false);
+                        TextView tvReq = row.findViewById(R.id.tvRequestRequester);
+                        TextView tvType = row.findViewById(R.id.tvRequestTypeBadge);
+                        TextView tvStatus = row.findViewById(R.id.tvRequestStatusBadge);
+                        TextView tvOffered = row.findViewById(R.id.tvRequestOfferedItem);
+                        TextView tvMsg = row.findViewById(R.id.tvRequestMessage);
+                        LinearLayout layoutActions = row.findViewById(R.id.layoutRequestActionButtons);
+                        Button btnAccept = row.findViewById(R.id.btnAcceptRequest);
+                        Button btnReject = row.findViewById(R.id.btnRejectRequest);
+
+                        tvReq.setText(r.getRequesterEmail() != null ? r.getRequesterEmail() : "Neighbor Requester");
+                        tvType.setText(r.getRequestType());
+                        tvStatus.setText(r.getStatus());
+                        tvMsg.setText(r.getMessage());
+
+                        if (!TextUtils.isEmpty(r.getOfferedItem())) {
+                            tvOffered.setVisibility(View.VISIBLE);
+                            tvOffered.setText("Offered: " + r.getOfferedItem());
+                        } else {
+                            tvOffered.setVisibility(View.GONE);
+                        }
+
+                        if (ItemRequest.STATUS_PENDING.equalsIgnoreCase(r.getStatus())) {
+                            layoutActions.setVisibility(View.VISIBLE);
+                            btnAccept.setOnClickListener(v -> {
+                                InteractionService.respondToRequest(r, ItemRequest.STATUS_ACCEPTED, new InteractionService.ActionCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        productStatus = Product.STATUS_RESERVED;
+                                        updateStatusUI();
+                                        setupOwnerAndBuyerActions();
+                                        dialog.dismiss();
+                                        Toast.makeText(ProductDetailsActivity.this, "Request accepted! Item is now Reserved.", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onFailure(String errorMessage) {
+                                        Toast.makeText(ProductDetailsActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            });
+
+                            btnReject.setOnClickListener(v -> {
+                                InteractionService.respondToRequest(r, ItemRequest.STATUS_REJECTED, new InteractionService.ActionCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        dialog.dismiss();
+                                        Toast.makeText(ProductDetailsActivity.this, "Request rejected.", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onFailure(String errorMessage) {
+                                        Toast.makeText(ProductDetailsActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            });
+                        } else {
+                            layoutActions.setVisibility(View.GONE);
+                        }
+
+                        container.addView(row);
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Toast.makeText(ProductDetailsActivity.this, "Error: " + errorMessage, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void markProductAsCompleted() {
+        new AlertDialog.Builder(this)
+                .setTitle("Mark as Completed")
+                .setMessage("Have you completed this donation or handover? This will finalize the transaction and mark the listing as Completed.")
+                .setPositiveButton("Complete", (dialog, which) -> {
+                    InteractionService.completeProductTransaction(productId, ownerId, new InteractionService.ActionCallback() {
+                        @Override
+                        public void onSuccess() {
+                            productStatus = Product.STATUS_COMPLETED;
+                            updateStatusUI();
+                            setupOwnerAndBuyerActions();
+                            Toast.makeText(ProductDetailsActivity.this, "Transaction completed! Listing archived.", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onFailure(String errorMessage) {
+                            Toast.makeText(ProductDetailsActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private double parsePrice(String priceString) {

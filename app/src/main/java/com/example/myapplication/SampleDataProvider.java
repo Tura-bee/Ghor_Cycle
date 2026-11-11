@@ -320,23 +320,86 @@ public class SampleDataProvider {
     }
 
     /**
-     * Filters products based on selected category and text query.
+     * Backward-compatible 3-argument filter method.
      */
     public static List<Product> filter(List<Product> allProducts, String category, String query) {
+        return filter(allProducts, category, query, null, null, null, false, null);
+    }
+
+    /**
+     * Comprehensive multi-filter covering Category, Condition, Transaction Type, Location, and Favorites.
+     */
+    public static List<Product> filter(List<Product> allProducts,
+                                       String category,
+                                       String query,
+                                       String condition,
+                                       String transactionType,
+                                       String location,
+                                       boolean onlyFavorites,
+                                       java.util.Set<String> favoriteIds) {
         List<Product> filtered = new ArrayList<>();
+        if (allProducts == null) return filtered;
+
         String normalizedQuery = query != null ? query.trim().toLowerCase(Locale.getDefault()) : "";
-        boolean isAllCategory = category == null || category.equalsIgnoreCase(CATEGORY_ALL) || category.trim().isEmpty();
+        boolean isAllCategory = category == null
+                || category.equalsIgnoreCase(CATEGORY_ALL)
+                || category.equalsIgnoreCase("All Categories")
+                || category.trim().isEmpty();
+        boolean isAllCondition = condition == null || condition.equalsIgnoreCase("All") || condition.trim().isEmpty();
+        boolean isAllType = transactionType == null || transactionType.equalsIgnoreCase("All") || transactionType.trim().isEmpty();
+        String normalizedLoc = location != null ? location.trim().toLowerCase(Locale.getDefault()) : "";
+        boolean isAllLoc = normalizedLoc.isEmpty() || normalizedLoc.equalsIgnoreCase("all");
 
         for (Product product : allProducts) {
-            boolean matchesCategory = isAllCategory || product.getCategory().equalsIgnoreCase(category);
-            boolean matchesQuery = normalizedQuery.isEmpty()
-                    || product.getName().toLowerCase(Locale.getDefault()).contains(normalizedQuery)
-                    || product.getDescription().toLowerCase(Locale.getDefault()).contains(normalizedQuery)
-                    || product.getCategory().toLowerCase(Locale.getDefault()).contains(normalizedQuery);
+            if (product == null) continue;
 
-            if (matchesCategory && matchesQuery) {
-                filtered.add(product);
+            // 1. Favorites filter
+            if (onlyFavorites) {
+                if (favoriteIds == null || !favoriteIds.contains(product.getProductId())) {
+                    continue;
+                }
             }
+
+            // 2. Category filter
+            if (!isAllCategory) {
+                if (product.getCategory() == null || !product.getCategory().equalsIgnoreCase(category)) {
+                    continue;
+                }
+            }
+
+            // 3. Condition filter
+            if (!isAllCondition) {
+                if (product.getCondition() == null || !product.getCondition().toLowerCase(Locale.getDefault()).contains(condition.toLowerCase(Locale.getDefault()))) {
+                    continue;
+                }
+            }
+
+            // 4. Transaction Type filter
+            if (!isAllType) {
+                if (product.getTransactionType() == null || !product.getTransactionType().equalsIgnoreCase(transactionType)) {
+                    continue;
+                }
+            }
+
+            // 5. Location filter
+            if (!isAllLoc) {
+                if (product.getLocation() == null || !product.getLocation().toLowerCase(Locale.getDefault()).contains(normalizedLoc)) {
+                    continue;
+                }
+            }
+
+            // 6. Text query search (matching title, description, or category)
+            if (!normalizedQuery.isEmpty()) {
+                String title = product.getTitle() != null ? product.getTitle().toLowerCase(Locale.getDefault()) : "";
+                String desc = product.getDescription() != null ? product.getDescription().toLowerCase(Locale.getDefault()) : "";
+                String cat = product.getCategory() != null ? product.getCategory().toLowerCase(Locale.getDefault()) : "";
+
+                if (!title.contains(normalizedQuery) && !desc.contains(normalizedQuery) && !cat.contains(normalizedQuery)) {
+                    continue;
+                }
+            }
+
+            filtered.add(product);
         }
         return filtered;
     }

@@ -18,10 +18,32 @@ service cloud.firestore {
     //   - transactionType: string (required, enum) - One of: 'Sell', 'Free', 'Donate', 'Recycle'
     //   - price: number (required, >= 0) - Item price in currency units
     //   - location: string (required, 2-200 chars) - Community / pickup location
-    //   - status: string (required, enum) - One of: 'Available', 'Reserved', 'Sold', 'Cycled'
+    //   - status: string (required, enum) - One of: 'Available', 'Reserved', 'Completed', 'Sold', 'Cycled'
     //   - createdAt: timestamp (required, immutable) - Timestamp when listing was created
     //   - updatedAt: timestamp (required) - Timestamp when listing was last updated
     //   - imageUrl: string (optional, 1-2000 chars) - Optional image URL or storage reference
+    //
+    // Subcollection: users/{userId}/favorites/{productId}
+    // Document ID: {productId}
+    // Fields:
+    //   - productId: string (required, immutable) - Product ID saved
+    //   - savedAt: timestamp (required) - Timestamp when saved
+    //
+    // Collection: item_requests
+    // Document ID: {requestId}
+    // Fields:
+    //   - requestId: string (required, immutable) - Unique request ID matching document ID
+    //   - productId: string (required, immutable) - Target product ID
+    //   - productTitle: string (required, 2-120 chars) - Title of product
+    //   - ownerId: string (required, immutable) - UID of listing owner
+    //   - requesterId: string (required, immutable) - UID of requester
+    //   - requesterEmail: string (optional, 3-200 chars) - Email of requester
+    //   - requestType: string (required, enum: 'DONATION', 'EXCHANGE')
+    //   - offeredItem: string (optional, 0-500 chars) - Offered item for exchange
+    //   - message: string (required, 1-1000 chars) - Message to owner
+    //   - status: string (required, enum: 'PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED')
+    //   - createdAt: timestamp (required, immutable)
+    //   - updatedAt: timestamp (required)
     //
     // ===============================================================
 
@@ -29,34 +51,28 @@ service cloud.firestore {
     // Helper Functions
     // ===============================================================
 
-    // Check if the user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Check if user owns the resource
     function isOwner(ownerId) {
       return isAuthenticated() && request.auth.uid == ownerId;
     }
 
-    // Validate allowed keys (strict schema enforcement to prevent schema pollution)
     function hasOnlyAllowedFields(fields) {
       return request.resource.data.keys().hasOnly(fields);
     }
 
-    // Validate required fields exist
     function hasRequiredFields(fields) {
       return request.resource.data.keys().hasAll(fields);
     }
 
-    // Validate string length bounds
     function validStringLength(field, minLen, maxLen) {
       return request.resource.data[field] is string &&
         request.resource.data[field].size() >= minLen &&
         request.resource.data[field].size() <= maxLen;
     }
 
-    // Validate optional string length if field exists
     function isValidOptionalString(field, minLen, maxLen) {
       return !(field in request.resource.data) ||
         (request.resource.data[field] is string &&
@@ -84,7 +100,7 @@ service cloud.firestore {
         'Electronics', 'Plastic', 'Paper', 'Metal'
       ];
       let validStatuses = [
-        'Available', 'Reserved', 'Sold', 'Cycled'
+        'Available', 'Reserved', 'Completed', 'Sold', 'Cycled'
       ];
       let validTransactionTypes = [
         'Sell', 'Free', 'Donate', 'Recycle'
@@ -107,22 +123,57 @@ service cloud.firestore {
         isValidOptionalString('imageUrl', 1, 2000);
     }
 
+    function isValidFavorite(data, productId) {
+      let allowedFields = ['productId', 'savedAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+        hasRequiredFields(allowedFields) &&
+        data.productId == productId &&
+        data.savedAt is timestamp;
+    }
+
+    function isValidRequest(data) {
+      let allowedFields = [
+        'requestId', 'productId', 'productTitle', 'ownerId',
+        'requesterId', 'requesterEmail', 'requestType', 'offeredItem',
+        'message', 'status', 'createdAt', 'updatedAt'
+      ];
+      let requiredFields = [
+        'requestId', 'productId', 'productTitle', 'ownerId',
+        'requesterId', 'requestType', 'message', 'status',
+        'createdAt', 'updatedAt'
+      ];
+      let validRequestTypes = ['DONATION', 'EXCHANGE'];
+      let validStatuses = ['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELLED'];
+
+      return hasOnlyAllowedFields(allowedFields) &&
+        hasRequiredFields(requiredFields) &&
+        data.requestId is string && data.requestId.size() > 0 && data.requestId.size() <= 128 &&
+        data.productId is string && data.productId.size() > 0 && data.productId.size() <= 128 &&
+        validStringLength('productTitle', 2, 120) &&
+        data.ownerId is string && data.ownerId.size() > 0 && data.ownerId.size() <= 128 &&
+        data.requesterId is string && data.requesterId.size() > 0 && data.requesterId.size() <= 128 &&
+        isValidOptionalString('requesterEmail', 3, 200) &&
+        data.requestType in validRequestTypes &&
+        isValidOptionalString('offeredItem', 0, 500) &&
+        validStringLength('message', 1, 1000) &&
+        data.status in validStatuses &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
     // ===============================================================
     // Security Rules
     // ===============================================================
 
     // Root collection: products
     match /products/{productId} {
-      // Public read access for community marketplace browsing
       allow read: if true;
 
-      // Create: Authenticated owner, matching ID, schema conforming
       allow create: if isAuthenticated() &&
         request.resource.data.ownerId == request.auth.uid &&
         request.resource.data.productId == productId &&
         isValidProduct(request.resource.data);
 
-      // Update: Authenticated owner, immutable productId & ownerId & createdAt, schema conforming
       allow update: if isAuthenticated() &&
         resource.data.ownerId == request.auth.uid &&
         request.resource.data.ownerId == resource.data.ownerId &&
@@ -130,9 +181,46 @@ service cloud.firestore {
         request.resource.data.createdAt == resource.data.createdAt &&
         isValidProduct(request.resource.data);
 
-      // Delete: Listing owner only
       allow delete: if isAuthenticated() &&
         resource.data.ownerId == request.auth.uid;
+    }
+
+    // Subcollection: users/{userId}/favorites/{productId}
+    match /users/{userId}/favorites/{productId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Collection: item_requests
+    match /item_requests/{requestId} {
+      // Both the requester and the product owner can read the request
+      allow read: if isAuthenticated() &&
+        (resource.data.requesterId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+
+      // Authenticated users can create requests, but cannot request their own products
+      allow create: if isAuthenticated() &&
+        request.resource.data.requesterId == request.auth.uid &&
+        request.resource.data.requesterId != request.resource.data.ownerId &&
+        request.resource.data.requestId == requestId &&
+        request.resource.data.status == 'PENDING' &&
+        isValidRequest(request.resource.data);
+
+      // Owner can ACCEPT or REJECT; Requester can CANCEL; Immutable core keys
+      allow update: if isAuthenticated() &&
+        (resource.data.ownerId == request.auth.uid || resource.data.requesterId == request.auth.uid) &&
+        request.resource.data.requestId == resource.data.requestId &&
+        request.resource.data.productId == resource.data.productId &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.requesterId == resource.data.requesterId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        (
+          (resource.data.ownerId == request.auth.uid && request.resource.data.status in ['ACCEPTED', 'REJECTED', 'PENDING']) ||
+          (resource.data.requesterId == request.auth.uid && request.resource.data.status in ['CANCELLED', 'PENDING'])
+        ) &&
+        isValidRequest(request.resource.data);
+
+      // Listing owner or requester can delete the request
+      allow delete: if isAuthenticated() &&
+        (resource.data.ownerId == request.auth.uid || resource.data.requesterId == request.auth.uid);
     }
 
     // Default deny for all other collections and documents

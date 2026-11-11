@@ -8,26 +8,32 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * MainActivity is the primary GhorCycle marketplace discovery hub.
@@ -47,11 +53,16 @@ public class MainActivity extends AppCompatActivity {
 
     private String currentUserName = "Neighbor";
     private String selectedCategory = SampleDataProvider.CATEGORY_ALL;
+    private String selectedCondition = "All";
+    private String selectedTransactionType = "All";
+    private String selectedLocation = "";
+    private boolean isFavoritesOnly = false;
     private String currentQuery = "";
     private long lastBackPressTime = 0;
 
     private List<Product> masterProductList = new ArrayList<>();
     private List<Product> displayedProductList = new ArrayList<>();
+    private Set<String> favoriteProductIds = new HashSet<>();
 
     private ProductAdapter productAdapter;
     private CategoryAdapter categoryAdapter;
@@ -62,13 +73,16 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView rvCategories;
     private RecyclerView rvProducts;
     private TextView tvResultCount;
+    private MaterialButton btnOpenFilterDialog;
     private TextView btnResetFilters;
+    private TextView tvActiveFilterBadges;
     private LinearLayout layoutEmptyState;
     private LinearLayout layoutLoadingState;
     private LinearLayout layoutErrorState;
     private TextView tvEmptyMessage;
     private BottomNavigationView bottomNav;
     private ListenerRegistration productListenerRegistration;
+    private ListenerRegistration favoritesListenerRegistration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +114,9 @@ public class MainActivity extends AppCompatActivity {
         rvCategories = findViewById(R.id.rvCategories);
         rvProducts = findViewById(R.id.rvProducts);
         tvResultCount = findViewById(R.id.tvResultCount);
+        btnOpenFilterDialog = findViewById(R.id.btnOpenFilterDialog);
         btnResetFilters = findViewById(R.id.btnResetFilters);
+        tvActiveFilterBadges = findViewById(R.id.tvActiveFilterBadges);
         layoutEmptyState = findViewById(R.id.layoutEmptyState);
         layoutLoadingState = findViewById(R.id.layoutLoadingState);
         layoutErrorState = findViewById(R.id.layoutErrorState);
@@ -148,10 +164,30 @@ public class MainActivity extends AppCompatActivity {
         });
 
         productAdapter.setOnFavoriteClickListener((product, position) -> {
-            String msg = product.isFavorite()
-                    ? "Added \"" + product.getName() + "\" to saved favorites"
-                    : "Removed from favorites";
-            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+            InteractionService.toggleFavorite(product.getProductId(), new InteractionService.ActionCallback() {
+                @Override
+                public void onSuccess() {
+                    boolean isFavNow = favoriteProductIds.contains(product.getProductId());
+                    if (isFavNow) {
+                        favoriteProductIds.remove(product.getProductId());
+                        product.setFavorite(false);
+                        Toast.makeText(MainActivity.this, "Removed from favorites", Toast.LENGTH_SHORT).show();
+                    } else {
+                        favoriteProductIds.add(product.getProductId());
+                        product.setFavorite(true);
+                        Toast.makeText(MainActivity.this, "Saved to favorites ❤️", Toast.LENGTH_SHORT).show();
+                    }
+                    productAdapter.notifyItemChanged(position);
+                    if (isFavoritesOnly) {
+                        applyFilters();
+                    }
+                }
+
+                @Override
+                public void onFailure(String errorMessage) {
+                    Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                }
+            });
         });
 
         rvProducts.setAdapter(productAdapter);
@@ -185,6 +221,11 @@ public class MainActivity extends AppCompatActivity {
             applyFilters();
         });
 
+        // Filter dialog launcher
+        if (btnOpenFilterDialog != null) {
+            btnOpenFilterDialog.setOnClickListener(v -> showFilterDialog());
+        }
+
         // Reset filter buttons
         View.OnClickListener resetClickListener = v -> resetAllFilters();
         btnResetFilters.setOnClickListener(resetClickListener);
@@ -200,10 +241,74 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void showFilterDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_marketplace_filter, null);
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+
+        Spinner spinnerType = dialogView.findViewById(R.id.spinnerFilterType);
+        Spinner spinnerCondition = dialogView.findViewById(R.id.spinnerFilterCondition);
+        EditText etLocation = dialogView.findViewById(R.id.etFilterLocation);
+        TextView btnClear = dialogView.findViewById(R.id.btnDialogClearFilters);
+        Button btnCancel = dialogView.findViewById(R.id.btnDialogCancelFilter);
+        Button btnApply = dialogView.findViewById(R.id.btnDialogApplyFilter);
+
+        // Transaction types
+        String[] types = new String[]{"All", Product.TYPE_SELL, Product.TYPE_FREE, Product.TYPE_DONATE, Product.TYPE_RECYCLE};
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, types);
+        spinnerType.setAdapter(typeAdapter);
+        for (int i = 0; i < types.length; i++) {
+            if (types[i].equalsIgnoreCase(selectedTransactionType)) {
+                spinnerType.setSelection(i);
+                break;
+            }
+        }
+
+        // Conditions
+        String[] conditions = new String[]{"All", "Like New", "Gently Used", "Good Condition", "Recyclable / Salvage"};
+        ArrayAdapter<String> condAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, conditions);
+        spinnerCondition.setAdapter(condAdapter);
+        for (int i = 0; i < conditions.length; i++) {
+            if (conditions[i].equalsIgnoreCase(selectedCondition)) {
+                spinnerCondition.setSelection(i);
+                break;
+            }
+        }
+
+        if (!TextUtils.isEmpty(selectedLocation)) {
+            etLocation.setText(selectedLocation);
+        }
+
+        btnClear.setOnClickListener(v -> {
+            selectedTransactionType = "All";
+            selectedCondition = "All";
+            selectedLocation = "";
+            dialog.dismiss();
+            applyFilters();
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnApply.setOnClickListener(v -> {
+            selectedTransactionType = spinnerType.getSelectedItem().toString();
+            selectedCondition = spinnerCondition.getSelectedItem().toString();
+            selectedLocation = etLocation.getText().toString().trim();
+            dialog.dismiss();
+            applyFilters();
+        });
+
+        dialog.show();
+    }
+
     private void resetAllFilters() {
         etSearch.setText("");
         currentQuery = "";
         selectedCategory = SampleDataProvider.CATEGORY_ALL;
+        selectedCondition = "All";
+        selectedTransactionType = "All";
+        selectedLocation = "";
+        isFavoritesOnly = false;
         categoryAdapter.setSelectedCategory(SampleDataProvider.CATEGORY_ALL);
         rvCategories.smoothScrollToPosition(0);
         applyFilters();
@@ -220,12 +325,34 @@ public class MainActivity extends AppCompatActivity {
             productListenerRegistration = null;
         }
 
+        if (favoritesListenerRegistration != null) {
+            favoritesListenerRegistration.remove();
+            favoritesListenerRegistration = null;
+        }
+
+        // Listen to User Favorites in real time
+        favoritesListenerRegistration = InteractionService.listenToUserFavorites(new InteractionService.FavoritesListCallback() {
+            @Override
+            public void onLoaded(Set<String> favoriteIds) {
+                favoriteProductIds = favoriteIds != null ? favoriteIds : new HashSet<>();
+                syncFavoritesWithMasterList();
+                applyFilters();
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Log.w(TAG, "Failed to load favorites: " + errorMessage);
+            }
+        });
+
+        // Listen to Products in real time
         productListenerRegistration = FirestoreProductService.listenToProducts(new FirestoreProductService.ProductListCallback() {
             @Override
             public void onLoaded(List<Product> products) {
                 layoutLoadingState.setVisibility(View.GONE);
                 layoutErrorState.setVisibility(View.GONE);
                 masterProductList = products != null ? products : new ArrayList<>();
+                syncFavoritesWithMasterList();
                 applyFilters();
             }
 
@@ -242,28 +369,65 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void syncFavoritesWithMasterList() {
+        if (masterProductList == null) return;
+        for (Product p : masterProductList) {
+            p.setFavorite(favoriteProductIds.contains(p.getProductId()));
+        }
+    }
+
     private void applyFilters() {
-        displayedProductList = SampleDataProvider.filter(masterProductList, selectedCategory, currentQuery);
+        displayedProductList = SampleDataProvider.filter(
+                masterProductList,
+                selectedCategory,
+                currentQuery,
+                selectedCondition,
+                selectedTransactionType,
+                selectedLocation,
+                isFavoritesOnly,
+                favoriteProductIds
+        );
         productAdapter.updateProducts(displayedProductList);
 
         boolean hasActiveFilter = !selectedCategory.equalsIgnoreCase(SampleDataProvider.CATEGORY_ALL)
-                || !currentQuery.trim().isEmpty();
+                || !currentQuery.trim().isEmpty()
+                || !selectedCondition.equalsIgnoreCase("All")
+                || !selectedTransactionType.equalsIgnoreCase("All")
+                || !selectedLocation.trim().isEmpty()
+                || isFavoritesOnly;
 
         btnResetFilters.setVisibility(hasActiveFilter ? View.VISIBLE : View.GONE);
+
+        // Build active filter badges text
+        StringBuilder badgeText = new StringBuilder();
+        if (isFavoritesOnly) badgeText.append("❤️ Favorites • ");
+        if (!selectedTransactionType.equalsIgnoreCase("All")) badgeText.append("Type: ").append(selectedTransactionType).append(" • ");
+        if (!selectedCondition.equalsIgnoreCase("All")) badgeText.append("Cond: ").append(selectedCondition).append(" • ");
+        if (!selectedLocation.trim().isEmpty()) badgeText.append("Area: ").append(selectedLocation).append(" • ");
+        if (badgeText.length() > 3) {
+            badgeText.setLength(badgeText.length() - 3);
+            if (tvActiveFilterBadges != null) {
+                tvActiveFilterBadges.setText(badgeText.toString());
+                tvActiveFilterBadges.setVisibility(View.VISIBLE);
+            }
+        } else {
+            if (tvActiveFilterBadges != null) {
+                tvActiveFilterBadges.setVisibility(View.GONE);
+            }
+        }
 
         if (displayedProductList.isEmpty()) {
             rvProducts.setVisibility(View.GONE);
             layoutEmptyState.setVisibility(View.VISIBLE);
             tvResultCount.setText("0 items found");
 
-            if (!currentQuery.trim().isEmpty()) {
+            if (isFavoritesOnly) {
+                tvEmptyMessage.setText("You have no saved favorites yet. Tap the heart icon on any product to save it here!");
+            } else if (!currentQuery.trim().isEmpty()) {
                 tvEmptyMessage.setText(String.format(Locale.getDefault(),
-                        "No products found for \"%s\" in %s. Try another keyword or reset filters.",
-                        currentQuery, selectedCategory));
+                        "No products found for \"%s\". Try another keyword or reset filters.", currentQuery));
             } else {
-                tvEmptyMessage.setText(String.format(Locale.getDefault(),
-                        "No products currently listed under %s. Check back soon or list an item!",
-                        selectedCategory));
+                tvEmptyMessage.setText("No products matched your selected filter criteria. Tap Reset to clear filters.");
             }
         } else {
             rvProducts.setVisibility(View.VISIBLE);
@@ -272,7 +436,9 @@ public class MainActivity extends AppCompatActivity {
                     "Showing %d %s",
                     displayedProductList.size(),
                     displayedProductList.size() == 1 ? "product" : "products");
-            if (!selectedCategory.equalsIgnoreCase(SampleDataProvider.CATEGORY_ALL)) {
+            if (isFavoritesOnly) {
+                countLabel = "❤️ " + countLabel + " in Saved Favorites";
+            } else if (!selectedCategory.equalsIgnoreCase(SampleDataProvider.CATEGORY_ALL)) {
                 countLabel += " in " + selectedCategory;
             }
             tvResultCount.setText(countLabel);
@@ -286,11 +452,13 @@ public class MainActivity extends AppCompatActivity {
             int itemId = item.getItemId();
 
             if (itemId == R.id.nav_home) {
-                // Already on Home: scroll to top
+                if (isFavoritesOnly) {
+                    isFavoritesOnly = false;
+                    applyFilters();
+                }
                 rvProducts.smoothScrollToPosition(0);
                 return true;
             } else if (itemId == R.id.nav_explore) {
-                // Clearly labeled placeholder
                 Log.d(TAG, "MainActivity: Explore bottom nav selected (placeholder)");
                 Toast.makeText(MainActivity.this,
                         "Explore placeholder — Community recycling map coming in a future update.",
@@ -300,20 +468,18 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "MainActivity: Explicit navigation -> AddItemActivity");
                 Intent intent = new Intent(MainActivity.this, AddItemActivity.class);
                 startActivity(intent);
-                return false; // Keep Home visually active on return
+                return false;
             } else if (itemId == R.id.nav_favorites) {
-                // Clearly labeled placeholder
-                Log.d(TAG, "MainActivity: Favorites bottom nav selected (placeholder)");
-                Toast.makeText(MainActivity.this,
-                        "Favorites placeholder — Cloud wishlist sync coming in a future update.",
-                        Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "MainActivity: Filtering feed by User Favorites");
+                isFavoritesOnly = true;
+                applyFilters();
                 return true;
             } else if (itemId == R.id.nav_profile) {
                 Log.d(TAG, "MainActivity: Explicit navigation -> ProfileActivity");
                 Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
                 intent.putExtra(ProfileActivity.EXTRA_PROFILE_NAME, currentUserName);
                 startActivity(intent);
-                return false; // Keep Home visually active on return
+                return false;
             }
             return false;
         });
@@ -355,6 +521,8 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_IS_FREE, product.isFree());
         intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_OWNER_ID, product.getOwnerId());
         intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_IMAGE_URL, product.getImageUrl());
+        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_TRANSACTION_TYPE, product.getTransactionType());
+        intent.putExtra(ProductDetailsActivity.EXTRA_PRODUCT_STATUS, product.getStatus());
         startActivity(intent);
     }
 
@@ -397,6 +565,10 @@ public class MainActivity extends AppCompatActivity {
         if (productListenerRegistration != null) {
             productListenerRegistration.remove();
             productListenerRegistration = null;
+        }
+        if (favoritesListenerRegistration != null) {
+            favoritesListenerRegistration.remove();
+            favoritesListenerRegistration = null;
         }
     }
 

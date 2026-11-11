@@ -171,7 +171,7 @@
             android:paddingStart="16dp"
             android:paddingTop="4dp"
             android:paddingEnd="16dp"
-            android:paddingBottom="6dp">
+            android:paddingBottom="4dp">
 
             <TextView
                 android:id="@+id/tvResultCount"
@@ -183,6 +183,20 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp"
                 tools:text="Showing 23 products" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnOpenFilterDialog"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_marginEnd="6dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="Filter ⚙"
+                android:textColor="@color/eco_green_primary"
+                android:textSize="11sp"
+                app:strokeColor="@color/eco_green_primary"
+                app:strokeWidth="1dp" />
 
             <TextView
                 android:id="@+id/btnResetFilters"
@@ -200,6 +214,25 @@
                 tools:visibility="visible" />
 
         </LinearLayout>
+
+        <!-- Active Filter Indicator Badges -->
+        <TextView
+            android:id="@+id/tvActiveFilterBadges"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/bg_role_tag"
+            android:paddingStart="10dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="4dp"
+            android:textColor="@color/eco_green_dark"
+            android:textSize="11sp"
+            android:visibility="gone"
+            tools:text="Filters: Free/Donate • Gently Used • Dhanmondi"
+            tools:visibility="visible" />
 
         <!-- Product Listing & State Containers -->
         <FrameLayout
