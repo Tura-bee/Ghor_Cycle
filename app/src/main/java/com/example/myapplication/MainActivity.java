@@ -478,11 +478,10 @@ public class MainActivity extends AppCompatActivity {
                 rvProducts.smoothScrollToPosition(0);
                 return true;
             } else if (itemId == R.id.nav_explore) {
-                Log.d(TAG, "MainActivity: Explore bottom nav selected (placeholder)");
-                Toast.makeText(MainActivity.this,
-                        "Explore placeholder — Community recycling map coming in a future update.",
-                        Toast.LENGTH_SHORT).show();
-                return true;
+                Log.d(TAG, "MainActivity: Explicit navigation -> EcoInsightActivity (Networking Demo)");
+                Intent intent = new Intent(MainActivity.this, EcoInsightActivity.class);
+                startActivity(intent);
+                return false;
             } else if (itemId == R.id.nav_add_item) {
                 Log.d(TAG, "MainActivity: Explicit navigation -> AddItemActivity");
                 Intent intent = new Intent(MainActivity.this, AddItemActivity.class);

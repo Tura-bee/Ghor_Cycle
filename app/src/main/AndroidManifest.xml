@@ -61,6 +61,12 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
 
+        <!-- Networking, REST & XML Hub (Stage 7) -->
+        <activity
+            android:name=".EcoInsightActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
     </application>
 
 </manifest>
