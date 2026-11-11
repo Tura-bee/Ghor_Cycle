@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">GhorCycle</string>
-    <string name="app_tagline">Smart Household Cycling &amp; Resale Marketplace</string>
-    <string name="splash_quote">"Give pre-loved household goods a second life"</string>
+    <string name="app_tagline">Give Old Things a New Life</string>
+    <string name="splash_quote">"Give Old Things a New Life"</string>
     <string name="btn_get_started">Get Started</string>
 
     <!-- Auth -->

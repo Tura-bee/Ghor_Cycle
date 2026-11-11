@@ -339,15 +339,84 @@ public class ProductDetailsActivity extends AppCompatActivity {
                 btnRequestDonation.setOnClickListener(v -> showSubmitRequestDialog(ItemRequest.TYPE_DONATION));
                 btnProposeExchange.setOnClickListener(v -> showSubmitRequestDialog(ItemRequest.TYPE_EXCHANGE));
 
-                btnContactSeller.setOnClickListener(v -> {
-                    Toast.makeText(this, "Connecting with seller in " + productSeller + "...", Toast.LENGTH_SHORT).show();
-                });
+                btnContactSeller.setOnClickListener(v -> showContactSellerDialog());
 
                 btnMakeOffer.setOnClickListener(v -> {
                     showSubmitRequestDialog(ItemRequest.TYPE_DONATION);
                 });
             }
         }
+    }
+
+    private void showContactSellerDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_contact_seller, null);
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+
+        ImageButton btnClose = dialogView.findViewById(R.id.btnContactDialogClose);
+        TextView tvProdName = dialogView.findViewById(R.id.tvContactProductName);
+        TextView tvProdLoc = dialogView.findViewById(R.id.tvContactProductLocation);
+        TextView tvProdPrice = dialogView.findViewById(R.id.tvContactProductPrice);
+
+        Button btnInAppOffer = dialogView.findViewById(R.id.btnContactInAppOffer);
+        Button btnPhone = dialogView.findViewById(R.id.btnContactPhone);
+        Button btnWhatsApp = dialogView.findViewById(R.id.btnContactWhatsApp);
+        Button btnEmail = dialogView.findViewById(R.id.btnContactEmail);
+
+        tvProdName.setText(productName);
+        tvProdLoc.setText("📍 " + productSeller);
+        tvProdPrice.setText(isProductFree ? "FREE" : productPrice);
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        // 1. In-App Offer
+        btnInAppOffer.setOnClickListener(v -> {
+            dialog.dismiss();
+            showSubmitRequestDialog(ItemRequest.TYPE_DONATION);
+        });
+
+        // 2. Call / Phone Dialer Intent
+        btnPhone.setOnClickListener(v -> {
+            String defaultPhone = "01711000000";
+            Intent dialIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + defaultPhone));
+            try {
+                startActivity(dialIntent);
+            } catch (Exception e) {
+                Toast.makeText(this, "No phone dialer application found.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // 3. WhatsApp Direct Chat Intent
+        btnWhatsApp.setOnClickListener(v -> {
+            String whatsappNumber = "+8801711000000";
+            String prefilledText = "Hello! I am interested in your GhorCycle listing: \"" + productName + "\" (" + (isProductFree ? "FREE" : productPrice) + "). Is it still available?";
+            try {
+                String url = "https://api.whatsapp.com/send?phone=" + whatsappNumber + "&text=" + Uri.encode(prefilledText);
+                Intent whatsappIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                startActivity(whatsappIntent);
+            } catch (Exception e) {
+                Toast.makeText(this, "WhatsApp is not installed on this device.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // 4. Send Email Inquiry Intent
+        btnEmail.setOnClickListener(v -> {
+            String subject = "Inquiry: " + productName + " on GhorCycle";
+            String body = "Hi,\n\nI saw your listing for \"" + productName + "\" listed in " + productSeller + " on GhorCycle.\nI would like to inquire about purchasing / picking this up.\n\nThank you!";
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
+            emailIntent.setData(Uri.parse("mailto:"));
+            emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{"seller@ghorcycle.com"});
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
+            emailIntent.putExtra(Intent.EXTRA_TEXT, body);
+            try {
+                startActivity(Intent.createChooser(emailIntent, "Send email inquiry to seller"));
+            } catch (Exception e) {
+                Toast.makeText(this, "No email app found.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
     }
 
     private void showSubmitRequestDialog(final String requestType) {

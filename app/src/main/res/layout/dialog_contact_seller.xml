@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Dialog Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:contentDescription="Contact Seller"
+            android:src="@drawable/ic_nav_profile"
+            app:tint="@color/eco_green_primary" />
+
+        <TextView
+            android:id="@+id/tvContactDialogTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-bold"
+            android:text="Contact Seller"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp" />
+
+        <ImageButton
+            android:id="@+id/btnContactDialogClose"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Close"
+            android:src="@drawable/ic_clear"
+            app:tint="@color/text_secondary" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvContactDialogSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Choose how you want to reach out to the seller for this item."
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp" />
+
+    <!-- Seller Info Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="@color/eco_green_surface"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/eco_green_light"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:id="@+id/tvContactProductName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-bold"
+                android:text="Vintage Bicycle"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvContactProductLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="📍 Dhanmondi, Dhaka"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvContactProductPrice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="৳ 4,500"
+                android:textColor="@color/eco_green_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Communication Options -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="Contact Options"
+        android:textColor="@color/text_primary"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <!-- 1. Send In-App Offer / Message -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnContactInAppOffer"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/eco_green_light"
+        android:text="💬 Send In-App Purchase Offer"
+        android:textAllCaps="false"
+        android:textColor="@color/eco_green_dark"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:cornerRadius="10dp" />
+
+    <!-- 2. Call / Phone Dialer -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnContactPhone"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:text="📞 Call / SMS Seller"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        app:cornerRadius="10dp"
+        app:strokeColor="#CBD5E1" />
+
+    <!-- 3. WhatsApp Direct Chat -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnContactWhatsApp"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:text="🟢 WhatsApp Seller"
+        android:textAllCaps="false"
+        android:textColor="#059669"
+        android:textSize="14sp"
+        app:cornerRadius="10dp"
+        app:strokeColor="#A7F3D0" />
+
+    <!-- 4. Email Seller -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnContactEmail"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:text="✉️ Send Email Inquiry"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        app:cornerRadius="10dp"
+        app:strokeColor="#CBD5E1" />
+
+</LinearLayout>

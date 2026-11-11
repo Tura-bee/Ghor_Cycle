@@ -17,13 +17,16 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivSplashLogo"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_ghorcycle_logo"
-            app:tint="@color/white" />
+            android:scaleType="centerCrop"
+            android:src="@drawable/img_ghorcycle_logo"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+            app:strokeColor="@color/white"
+            app:strokeWidth="2dp" />
 
         <TextView
             android:id="@+id/tvSplashTitle"
