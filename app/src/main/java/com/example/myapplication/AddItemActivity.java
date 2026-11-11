@@ -193,10 +193,22 @@ public class AddItemActivity extends AppCompatActivity {
                     if (uri != null) {
                         selectedImageUri = uri;
                         Log.d(TAG, "AddItemActivity: Photo selected with URI: " + uri);
-                        ivSelectedPhoto.setImageURI(uri);
-                        ivSelectedPhoto.setVisibility(View.VISIBLE);
-                        layoutPhotoPlaceholder.setVisibility(View.GONE);
-                        tvChangePhotoBadge.setVisibility(View.VISIBLE);
+
+                        // Stage 6 Content Provider demonstration: resolve metadata and check stream accessibility
+                        ContentProviderHelper.FileMetadata metadata = ContentProviderHelper.resolveUriMetadata(this, uri);
+                        Log.d(TAG, "ContentProvider resolved: name=" + metadata.displayName
+                                + ", size=" + metadata.getFormattedSize()
+                                + ", accessible=" + metadata.isAccessible);
+
+                        if (metadata.isAccessible) {
+                            ivSelectedPhoto.setImageURI(uri);
+                            ivSelectedPhoto.setVisibility(View.VISIBLE);
+                            layoutPhotoPlaceholder.setVisibility(View.GONE);
+                            tvChangePhotoBadge.setVisibility(View.VISIBLE);
+                            Toast.makeText(this, "Attached: " + metadata.displayName + " (" + metadata.getFormattedSize() + ")", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, "Selected media could not be accessed. Please choose another file.", Toast.LENGTH_LONG).show();
+                        }
                     }
                 }
         );

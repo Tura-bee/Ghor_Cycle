@@ -84,6 +84,13 @@ public class MainActivity extends AppCompatActivity {
     private ListenerRegistration productListenerRegistration;
     private ListenerRegistration favoritesListenerRegistration;
 
+    // Stage 6 Components Demo: BroadcastReceiver & WorkManager
+    private NetworkChangeReceiver networkReceiver;
+    private LinearLayout layoutConnectivityBanner;
+    private TextView tvConnectivityMessage;
+    private MaterialButton btnHeaderSyncWork;
+    private TextView btnBannerSyncWork;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,12 +129,24 @@ public class MainActivity extends AppCompatActivity {
         layoutErrorState = findViewById(R.id.layoutErrorState);
         tvEmptyMessage = findViewById(R.id.tvEmptyMessage);
         bottomNav = findViewById(R.id.bottomNavigation);
+
+        layoutConnectivityBanner = findViewById(R.id.layoutConnectivityBanner);
+        tvConnectivityMessage = findViewById(R.id.tvConnectivityMessage);
+        btnHeaderSyncWork = findViewById(R.id.btnHeaderSyncWork);
+        btnBannerSyncWork = findViewById(R.id.btnBannerSyncWork);
     }
 
     private void setupHeader() {
         TextView tvGreeting = findViewById(R.id.tvMainGreeting);
         if (tvGreeting != null) {
             tvGreeting.setText("Hello, " + currentUserName + " 👋");
+        }
+
+        if (btnHeaderSyncWork != null) {
+            btnHeaderSyncWork.setOnClickListener(v -> triggerBackgroundSync());
+        }
+        if (btnBannerSyncWork != null) {
+            btnBannerSyncWork.setOnClickListener(v -> triggerBackgroundSync());
         }
 
         Button btnHeaderAdd = findViewById(R.id.btnHeaderAddItem);
@@ -530,6 +549,40 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.d(TAG, "MainActivity: onStart() - Activity becoming visible");
+
+        // Dynamically register BroadcastReceiver with RECEIVER_NOT_EXPORTED (Android 13+ compliant)
+        networkReceiver = NetworkChangeReceiver.register(this, (isConnected, statusMessage) -> {
+            runOnUiThread(() -> updateConnectivityUI(isConnected, statusMessage));
+        });
+
+        // Initial check without assuming broadcast fires immediately
+        boolean isOnline = NetworkChangeReceiver.checkInternetConnectivity(this);
+        updateConnectivityUI(isOnline, isOnline ? "Online" : "Offline — Showing cached marketplace items");
+    }
+
+    private void updateConnectivityUI(boolean isConnected, String statusMessage) {
+        if (layoutConnectivityBanner != null) {
+            if (isConnected) {
+                layoutConnectivityBanner.setVisibility(View.GONE);
+            } else {
+                layoutConnectivityBanner.setVisibility(View.VISIBLE);
+                if (tvConnectivityMessage != null) {
+                    tvConnectivityMessage.setText(statusMessage);
+                }
+            }
+        }
+    }
+
+    private void triggerBackgroundSync() {
+        Toast.makeText(this, "Enqueuing background offline sync via WorkManager...", Toast.LENGTH_SHORT).show();
+        BackgroundSyncManager.scheduleOfflineSync(this, (state, message) -> {
+            Log.d(TAG, "Sync work state: " + state.name() + " (" + message + ")");
+            if (state == androidx.work.WorkInfo.State.SUCCEEDED) {
+                Toast.makeText(MainActivity.this, "✔ " + message, Toast.LENGTH_LONG).show();
+            } else if (state == androidx.work.WorkInfo.State.FAILED) {
+                Toast.makeText(MainActivity.this, "Sync could not complete. Retrying when network stabilizes.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -550,6 +603,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         Log.d(TAG, "MainActivity: onStop() - Activity stopped");
+
+        // Unregister BroadcastReceiver dynamically to prevent context leak
+        if (networkReceiver != null) {
+            NetworkChangeReceiver.unregister(this, networkReceiver);
+            networkReceiver = null;
+        }
     }
 
     @Override
