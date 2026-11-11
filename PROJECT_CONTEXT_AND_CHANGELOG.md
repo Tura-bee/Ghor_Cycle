@@ -15,9 +15,13 @@
 - **Language & Stack**: 100% Pure Java (JDK 1.8 target) & Android XML (Zero Kotlin, Zero Compose). Android SDK (`minSdk 24`, `compileSdk 33`, `targetSdk 33`), Material 3 (`1.5.0`), AndroidX AppCompat (`1.4.1`) & ConstraintLayout (`2.1.3`), Firebase BoM (`32.8.0` — Auth, Firestore, Storage), AndroidX WorkManager (`2.8.1`).
 - **Build Output Path**: Configured in root `build.gradle` to `C:/Users/Asus/.android_build/Ghor_Cycle/${project.name}`.
 - **Ready-to-Install Phone APK**: `C:\Users\Asus\OneDrive\Desktop\GhorCycle.apk` (also at `C:\Users\Asus\.android_build\Ghor_Cycle\app\outputs\apk\debug\app-debug.apk`).
-- **Firebase & Autonomous Local Fallback Status**:
-  - `google-services` plugin (`4.4.2`) is configured in root `build.gradle` and prepared in `app/build.gradle` (uncomment line 3 once `google-services.json` for package `com.example.ghor_cycle` is placed in `app/`).
-  - **Self-Contained Local Persistence**: `FirebaseAuthService`, `FirestoreProductService`, and `InteractionService` feature automatic runtime detection. When `google-services.json` is not present, `FirebaseAuthService` automatically provisions and persists a local user session in `SharedPreferences` (`ghorcycle_auth_prefs`), allowing users on physical phones to register, sign in, post items with photos, favorite items, send donation/exchange requests, and track eco-impact with zero errors.
+- **App Tagline**: "Give Old Things a New Life" (updated in `strings.xml`, `activity_splash.xml`, etc.).
+- **Branding & Logo**: Real community sharing shelf photo emblem (`img_ghorcycle_logo.png` / `ic_launcher_fg.png`) across all mipmap densities (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) and in-app headers.
+- **Firebase & Authentication Status**:
+  - Live Firebase project: `ghorcycle-f90a6` (`google-services.json` placed in `app/`).
+  - Google Sign-In (`play-services-auth:20.7.0`) enabled and active alongside Email/Password and Guest browsing.
+  - Debug Keystore SHA-1: `32:30:56:99:DF:C1:7F:F8:B3:3F:26:6F:5C:D7:12:EE:CD:12:28:5A`
+  - **Self-Contained Local Persistence**: `FirebaseAuthService`, `FirestoreProductService`, and `InteractionService` feature automatic runtime detection with local fallback when needed.
 
 ---
 
@@ -125,3 +129,15 @@ The app works 100% out-of-the-box on any phone using its autonomous local persis
 - Renamed root project from `"My Application"` to `"Ghor_Cycle"` in `settings.gradle`.
 - Renamed application package, namespace, and `applicationId` from `com.example.myapplication` to **`com.example.ghor_cycle`** across `app/build.gradle`, `AndroidManifest.xml`, `themes.xml` (`Theme.GhorCycle`), all 31 main Java classes, all 10 unit test classes, and `ExampleInstrumentedTest.java`.
 - Verified all **45 unit tests pass (100%)** and built fresh debug APK to `C:\Users\Asus\OneDrive\Desktop\GhorCycle.apk`.
+
+### [2026-11-11 / 2026-11-12] — Live Firebase Sync, Google Sign-In, Community Logo & Contact Seller Expansion
+- Placed live `google-services.json` (`project_id: ghorcycle-f90a6`) in `app/` and activated `com.google.gms.google-services` plugin.
+- Integrated Google Sign-In via `play-services-auth:20.7.0` in `app/build.gradle`, `FirebaseAuthService.signInWithGoogle()`, `LoginActivity`, and `RegisterActivity`, complete with `ic_google_logo.xml` and Material 3 action buttons. Extracted debug keystore SHA-1 (`32:30:56:99:DF:C1:7F:F8:B3:3F:26:6F:5C:D7:12:EE:CD:12:28:5A`).
+- Updated app tagline and splash quotes to **"Give Old Things a New Life"** across `strings.xml`, `activity_splash.xml`, etc.
+- Created high-resolution mipmap launcher icons (`ic_launcher.png`, `ic_launcher_round.png`, and adaptive `ic_launcher_fg.png` across `mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) and in-app logo assets (`img_ghorcycle_logo.png`) from the user's community reuse shelf photo.
+- Fixed and expanded the **"Contact Seller"** feature in `ProductDetailsActivity.java`: created `dialog_contact_seller.xml` offering 4 distinct communication channels:
+  1. In-App Purchase Offer dialog.
+  2. Phone Dialer intent (`tel:`) for direct calling and SMS.
+  3. WhatsApp Direct Chat intent with pre-formatted inquiry text.
+  4. Email Inquiry intent (`mailto:`) with pre-composed subject line.
+- All 45 unit tests re-verified with 100% pass rate (`BUILD SUCCESSFUL`), and fresh APK published to `C:\Users\Asus\OneDrive\Desktop\GhorCycle.apk`.
